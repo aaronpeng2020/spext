@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.32" />
     <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
     <PackageReference Include="CredentialManagement" Version="1.0.2" />
+    <PackageReference Include="ModernWpfUI" Version="0.9.4" />
   </ItemGroup>
 
   <ItemGroup>

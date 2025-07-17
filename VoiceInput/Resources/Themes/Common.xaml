@@ -1,0 +1,39 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Common Resources (Theme Independent) -->
+    
+    <!-- Font Settings -->
+    <FontFamily x:Key="DefaultFontFamily">Segoe UI</FontFamily>
+    <System:Double x:Key="TitleFontSize" xmlns:System="clr-namespace:System;assembly=mscorlib">24</System:Double>
+    <System:Double x:Key="HeaderFontSize" xmlns:System="clr-namespace:System;assembly=mscorlib">18</System:Double>
+    <System:Double x:Key="NormalFontSize" xmlns:System="clr-namespace:System;assembly=mscorlib">14</System:Double>
+    <System:Double x:Key="SmallFontSize" xmlns:System="clr-namespace:System;assembly=mscorlib">12</System:Double>
+    
+    <!-- Spacing -->
+    <Thickness x:Key="SmallMargin">4</Thickness>
+    <Thickness x:Key="MediumMargin">8</Thickness>
+    <Thickness x:Key="LargeMargin">16</Thickness>
+    <Thickness x:Key="XLargeMargin">24</Thickness>
+    
+    <!-- Corner Radius -->
+    <CornerRadius x:Key="SmallCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="MediumCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="LargeCornerRadius">12</CornerRadius>
+    
+    <!-- Shadows -->
+    <DropShadowEffect x:Key="SmallShadow" ShadowDepth="2" BlurRadius="4" Opacity="0.2" Direction="270"/>
+    <DropShadowEffect x:Key="MediumShadow" ShadowDepth="4" BlurRadius="8" Opacity="0.3" Direction="270"/>
+    <DropShadowEffect x:Key="LargeShadow" ShadowDepth="8" BlurRadius="16" Opacity="0.4" Direction="270"/>
+    
+    <!-- Animations Duration -->
+    <Duration x:Key="FastAnimationDuration">0:0:0.15</Duration>
+    <Duration x:Key="NormalAnimationDuration">0:0:0.3</Duration>
+    <Duration x:Key="SlowAnimationDuration">0:0:0.5</Duration>
+    
+    <!-- Easing Functions -->
+    <CubicEase x:Key="EaseOut" EasingMode="EaseOut"/>
+    <CubicEase x:Key="EaseInOut" EasingMode="EaseInOut"/>
+    <ExponentialEase x:Key="ExponentialEaseOut" EasingMode="EaseOut" Exponent="4"/>
+    
+</ResourceDictionary>

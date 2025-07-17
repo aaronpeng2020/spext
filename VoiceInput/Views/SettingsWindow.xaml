@@ -3,138 +3,112 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
-        Title="语音输入法设置" Height="650" Width="550"
+        Title="语音输入法设置" Height="700" Width="900"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
-    <Grid Margin="20">
+        ResizeMode="NoResize"
+        Style="{StaticResource ModernWindowStyle}"
+        ui:WindowHelper.UseModernWindowStyle="True">
+    
+    <ui:ThemeManager.RequestedTheme>Light</ui:ThemeManager.RequestedTheme>
+    
+    <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
-        <!-- 选项卡 -->
-        <TabControl Grid.Row="0" Margin="0,0,0,10">
-            <!-- 基本设置选项卡 -->
-            <TabItem Header="基本设置">
-                <StackPanel Margin="10">
-                    <!-- API 密钥设置 -->
-                    <GroupBox Header="API 设置" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <Label Content="OpenAI API 密钥:" Padding="0,0,0,5"/>
-                            <PasswordBox x:Name="ApiKeyBox" Height="26"/>
-                            <TextBlock Text="请输入您的 OpenAI API 密钥" 
-                                      Foreground="Gray" FontSize="11" Margin="0,5,0,0"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- 快捷键设置 -->
-                    <GroupBox Header="快捷键设置" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <Label Content="录音快捷键:" Padding="0,0,0,5"/>
-                            <TextBox x:Name="HotkeyBox" Height="26" IsReadOnly="True" Text="F3"/>
-                            <TextBlock Text="点击文本框然后按下想要设置的快捷键" 
-                                      Foreground="Gray" FontSize="11" Margin="0,5,0,0"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- 启动设置 -->
-                    <GroupBox Header="启动设置" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <CheckBox x:Name="AutoStartCheckBox" Content="开机自动启动" IsChecked="True" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- 录音设置 -->
-                    <GroupBox Header="录音设置" Margin="0,0,0,15">
-                        <StackPanel Margin="10">
-                            <CheckBox x:Name="MuteWhileRecordingCheckBox" Content="录音时暂停其他声音" IsChecked="True" VerticalAlignment="Center"/>
-                            <TextBlock Text="启用后，按下录音键时会自动暂停系统中其他声音" 
-                                      Foreground="Gray" FontSize="11" Margin="0,5,0,0"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- 测试功能 -->
-                    <GroupBox Header="测试">
-                        <StackPanel Margin="10">
-                            <Button x:Name="TestButton" Content="测试语音识别" Width="130" Height="32" Click="TestButton_Click"/>
-                            <TextBlock x:Name="TestResultText" Text="" Foreground="Gray" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
-            </TabItem>
-
-            <!-- 代理设置选项卡 -->
-            <TabItem Header="代理设置">
-                <StackPanel Margin="10">
-                    <!-- 启用代理 -->
-                    <CheckBox x:Name="ProxyEnabledCheckBox" Content="启用HTTP代理" Margin="0,0,0,15" 
-                              Checked="ProxyEnabledCheckBox_Changed" Unchecked="ProxyEnabledCheckBox_Changed"/>
-
-                    <!-- 代理服务器设置 -->
-                    <GroupBox Header="代理服务器" Margin="0,0,0,15" x:Name="ProxyServerGroup">
-                        <Grid Margin="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="80"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <Label Content="地址:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBox x:Name="ProxyAddressBox" Grid.Row="0" Grid.Column="1" Height="26" Margin="5,0"/>
-                            <Label Content="端口:" Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                            <TextBox x:Name="ProxyPortBox" Grid.Row="0" Grid.Column="3" Height="26" Margin="5,0,0,0"/>
-                            
-                            <TextBlock Text="例如: proxy.example.com 或 192.168.1.100" 
-                                      Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
-                                      Foreground="Gray" FontSize="11" Margin="0,5,0,0"/>
-                        </Grid>
-                    </GroupBox>
-
-                    <!-- 代理认证设置 -->
-                    <GroupBox Header="代理认证（可选）" x:Name="ProxyAuthGroup">
-                        <StackPanel Margin="10">
-                            <CheckBox x:Name="ProxyAuthCheckBox" Content="代理需要身份验证" Margin="0,0,0,10"/>
-                            
-                            <Grid x:Name="ProxyAuthGrid" Visibility="Collapsed">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <Label Content="用户名:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-                                <TextBox x:Name="ProxyUsernameBox" Grid.Row="0" Grid.Column="1" Height="26" Margin="5,2"/>
-                                
-                                <Label Content="密码:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
-                                <PasswordBox x:Name="ProxyPasswordBox" Grid.Row="1" Grid.Column="1" Height="26" Margin="5,2"/>
-                            </Grid>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <!-- 测试代理连接 -->
-                    <GroupBox Header="测试代理" Margin="0,15,0,0">
-                        <StackPanel Margin="10">
-                            <Button x:Name="TestProxyButton" Content="测试代理连接" Width="130" Height="32" Click="TestProxyButton_Click"/>
-                            <TextBlock x:Name="ProxyTestResultText" Text="" Foreground="Gray" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
-            </TabItem>
-        </TabControl>
-
-        <!-- 按钮 -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="SaveButton" Content="保存" Width="80" Height="30" Margin="0,0,10,0" Click="SaveButton_Click"/>
-            <Button x:Name="CancelButton" Content="取消" Width="80" Height="30" Click="CancelButton_Click"/>
-        </StackPanel>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" Height="60">
+            <TextBlock Text="VoiceInput 设置" 
+                      VerticalAlignment="Center" 
+                      HorizontalAlignment="Left"
+                      Margin="24,0"
+                      Foreground="White"
+                      FontSize="24"
+                      FontWeight="Light"/>
+        </Border>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Navigation Sidebar -->
+            <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}">
+                <ui:NavigationView x:Name="NavigationView" 
+                                  IsBackButtonVisible="Collapsed"
+                                  IsPaneToggleButtonVisible="False"
+                                  PaneDisplayMode="Left"
+                                  IsSettingsVisible="False"
+                                  SelectionChanged="NavigationView_SelectionChanged">
+                    <ui:NavigationView.MenuItems>
+                        <ui:NavigationViewItem Content="基本设置" Tag="Basic" IsSelected="True">
+                            <ui:NavigationViewItem.Icon>
+                                <ui:SymbolIcon Symbol="Setting"/>
+                            </ui:NavigationViewItem.Icon>
+                        </ui:NavigationViewItem>
+                        
+                        <ui:NavigationViewItem Content="API 设置" Tag="API">
+                            <ui:NavigationViewItem.Icon>
+                                <ui:SymbolIcon Symbol="World"/>
+                            </ui:NavigationViewItem.Icon>
+                        </ui:NavigationViewItem>
+                        
+                        <ui:NavigationViewItem Content="代理设置" Tag="Proxy">
+                            <ui:NavigationViewItem.Icon>
+                                <ui:SymbolIcon Symbol="Globe"/>
+                            </ui:NavigationViewItem.Icon>
+                        </ui:NavigationViewItem>
+                        
+                        <ui:NavigationViewItem Content="界面设置" Tag="UI">
+                            <ui:NavigationViewItem.Icon>
+                                <ui:SymbolIcon Symbol="View"/>
+                            </ui:NavigationViewItem.Icon>
+                        </ui:NavigationViewItem>
+                    </ui:NavigationView.MenuItems>
+                </ui:NavigationView>
+            </Border>
+            
+            <!-- Content Area -->
+            <Border Grid.Column="1" Padding="24">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Frame x:Name="ContentFrame" NavigationUIVisibility="Hidden"/>
+                </ScrollViewer>
+            </Border>
+            
+            <!-- Logo in bottom right -->
+            <Border Grid.Column="1" 
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Bottom" 
+                    Margin="0,0,24,24"
+                    Width="80" Height="64"
+                    Opacity="0.3">
+                <Control Template="{StaticResource VoiceInputLogoTemplate}"/>
+            </Border>
+        </Grid>
+        
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Height="60">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="24,0">
+                <Button x:Name="SaveButton" 
+                        Content="保存" 
+                        Width="100" 
+                        Height="36" 
+                        Margin="0,0,12,0" 
+                        Style="{StaticResource ModernButtonStyle}"
+                        Click="SaveButton_Click"/>
+                <Button x:Name="CancelButton" 
+                        Content="取消" 
+                        Width="100" 
+                        Height="36" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="CancelButton_Click"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ModernWpf;
 using VoiceInput.Core;
 using VoiceInput.Services;
 
@@ -36,6 +37,9 @@ namespace VoiceInput
             LoggerService.Log("请查看系统托盘图标");
             LoggerService.Log("按住 F3 键开始录音");
             LoggerService.Log("===============================================");
+            
+            // 设置默认主题
+            ThemeManager.Current.ApplicationTheme = ApplicationTheme.Light;
 
             // 配置服务
             var services = new ServiceCollection();

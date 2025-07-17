@@ -1,0 +1,95 @@
+<Page x:Class="VoiceInput.Views.Pages.BasicSettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.modernwpf.com/2019"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="600">
+    
+    <StackPanel>
+        <TextBlock Text="基本设置" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,16"/>
+        
+        <!-- API 密钥设置 -->
+        <Border Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="API 密钥" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <Label Content="OpenAI API 密钥" Style="{StaticResource ModernLabelStyle}"/>
+                <PasswordBox x:Name="ApiKeyBox" 
+                           Style="{StaticResource ModernPasswordBoxStyle}"
+                           ui:ControlHelper.PlaceholderText="输入您的 API 密钥"/>
+                <TextBlock Text="API密钥将安全存储在Windows凭据管理器中" 
+                         Foreground="{DynamicResource TextSecondaryBrush}" 
+                         FontSize="12" 
+                         Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- 快捷键设置 -->
+        <Border Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="快捷键" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <Label Content="录音快捷键" Style="{StaticResource ModernLabelStyle}"/>
+                <TextBox x:Name="HotkeyBox" 
+                       Style="{StaticResource ModernTextBoxStyle}"
+                       IsReadOnly="True" 
+                       Text="F3"
+                       ui:ControlHelper.PlaceholderText="点击后按下新的快捷键"/>
+                <TextBlock Text="点击文本框然后按下想要设置的快捷键" 
+                         Foreground="{DynamicResource TextSecondaryBrush}" 
+                         FontSize="12" 
+                         Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- 启动设置 -->
+        <Border Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="启动选项" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <CheckBox x:Name="AutoStartCheckBox" 
+                        Content="开机自动启动" 
+                        IsChecked="True"
+                        Style="{StaticResource ModernCheckBoxStyle}"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- 录音设置 -->
+        <Border Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="录音选项" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <CheckBox x:Name="MuteWhileRecordingCheckBox" 
+                        Content="录音时暂停其他声音" 
+                        IsChecked="True"
+                        Style="{StaticResource ModernCheckBoxStyle}"/>
+                <TextBlock Text="启用后，按下录音键时会自动暂停系统中其他声音，避免干扰" 
+                         Foreground="{DynamicResource TextSecondaryBrush}" 
+                         FontSize="12" 
+                         Margin="24,4,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- 测试功能 -->
+        <Border Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="功能测试" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <Button x:Name="TestButton" 
+                      Content="测试语音识别" 
+                      Width="140" 
+                      HorizontalAlignment="Left"
+                      Style="{StaticResource ModernButtonStyle}"
+                      Click="TestButton_Click"/>
+                <TextBlock x:Name="TestResultText" 
+                         Text="" 
+                         Foreground="{DynamicResource TextSecondaryBrush}" 
+                         FontSize="12" 
+                         Margin="0,8,0,0" 
+                         TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</Page>

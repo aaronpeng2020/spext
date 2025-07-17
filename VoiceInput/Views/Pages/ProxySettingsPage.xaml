@@ -1,0 +1,114 @@
+<Page x:Class="VoiceInput.Views.Pages.ProxySettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.modernwpf.com/2019"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="600">
+    
+    <StackPanel>
+        <TextBlock Text="代理设置" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,16"/>
+        
+        <!-- 启用代理 -->
+        <Border Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <CheckBox x:Name="ProxyEnabledCheckBox" 
+                        Content="启用HTTP代理" 
+                        Style="{StaticResource ModernCheckBoxStyle}"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Checked="ProxyEnabledCheckBox_Changed" 
+                        Unchecked="ProxyEnabledCheckBox_Changed"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- 代理服务器设置 -->
+        <Border x:Name="ProxyServerCard" Style="{StaticResource CardStyle}" IsEnabled="False">
+            <StackPanel>
+                <TextBlock Text="代理服务器" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <Label Content="服务器地址" Style="{StaticResource ModernLabelStyle}"/>
+                        <TextBox x:Name="ProxyAddressBox" 
+                               Style="{StaticResource ModernTextBoxStyle}"
+                               ui:ControlHelper.PlaceholderText="例如: proxy.example.com"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="2">
+                        <Label Content="端口" Style="{StaticResource ModernLabelStyle}"/>
+                        <ui:NumberBox x:Name="ProxyPortBox" 
+                                    Value="8080"
+                                    Minimum="1"
+                                    Maximum="65535"
+                                    SpinButtonPlacementMode="Inline"/>
+                    </StackPanel>
+                </Grid>
+                
+                <TextBlock Text="输入代理服务器的地址和端口号" 
+                         Foreground="{DynamicResource TextSecondaryBrush}" 
+                         FontSize="12" 
+                         Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- 代理认证设置 -->
+        <Border x:Name="ProxyAuthCard" Style="{StaticResource CardStyle}" IsEnabled="False">
+            <StackPanel>
+                <CheckBox x:Name="ProxyAuthCheckBox" 
+                        Content="代理需要身份验证" 
+                        Style="{StaticResource ModernCheckBoxStyle}"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Margin="0,0,0,12"
+                        Checked="ProxyAuthCheckBox_Changed"
+                        Unchecked="ProxyAuthCheckBox_Changed"/>
+                
+                <StackPanel x:Name="ProxyAuthPanel" Visibility="Collapsed">
+                    <Label Content="用户名" Style="{StaticResource ModernLabelStyle}"/>
+                    <TextBox x:Name="ProxyUsernameBox" 
+                           Style="{StaticResource ModernTextBoxStyle}"
+                           ui:ControlHelper.PlaceholderText="输入代理用户名"
+                           Margin="0,0,0,12"/>
+                    
+                    <Label Content="密码" Style="{StaticResource ModernLabelStyle}"/>
+                    <PasswordBox x:Name="ProxyPasswordBox" 
+                               Style="{StaticResource ModernPasswordBoxStyle}"
+                               ui:ControlHelper.PlaceholderText="输入代理密码"/>
+                    
+                    <TextBlock Text="代理凭据将安全存储在Windows凭据管理器中" 
+                             Foreground="{DynamicResource TextSecondaryBrush}" 
+                             FontSize="12" 
+                             Margin="0,8,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        
+        <!-- 测试代理连接 -->
+        <Border x:Name="ProxyTestCard" Style="{StaticResource CardStyle}" IsEnabled="False">
+            <StackPanel>
+                <TextBlock Text="连接测试" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                
+                <Button x:Name="TestProxyButton" 
+                      Content="测试代理连接" 
+                      Width="140" 
+                      HorizontalAlignment="Left"
+                      Style="{StaticResource ModernButtonStyle}"
+                      Click="TestProxyButton_Click"/>
+                <TextBlock x:Name="ProxyTestResultText" 
+                         Text="" 
+                         Foreground="{DynamicResource TextSecondaryBrush}" 
+                         FontSize="12" 
+                         Margin="0,8,0,0" 
+                         TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</Page>

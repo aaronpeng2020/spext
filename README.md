@@ -1,4 +1,4 @@
-# SPEXT VoiceInput - Windows 语音输入法
+# SPEXT - Windows 语音输入法
 
 一款基于 OpenAI Whisper API 的 Windows 语音输入工具，支持全局热键录音并自动转换为文字输入。
 
