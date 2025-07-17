@@ -1,0 +1,1 @@
+使用@commit-rules.md 生成commit，并自动git psuh
