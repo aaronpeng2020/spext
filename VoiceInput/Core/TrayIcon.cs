@@ -1,5 +1,7 @@
 using System;
 using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using VoiceInput.Services;
 using VoiceInput.Views;
@@ -14,9 +16,9 @@ namespace VoiceInput.Core
         private readonly AudioRecorderService _audioRecorder;
         private readonly ConfigManager _configManager;
         
-        // 图标资源（临时使用系统图标）
-        private readonly Icon _normalIcon = SystemIcons.Application;
-        private readonly Icon _recordingIcon = SystemIcons.Information;
+        // 图标资源
+        private Icon? _normalIcon;
+        private Icon? _recordingIcon;
 
         public TrayIcon(
             GlobalHotkeyService hotkeyService, 
@@ -30,12 +32,15 @@ namespace VoiceInput.Core
 
         public void Initialize()
         {
+            // 加载图标资源
+            LoadIcons();
+            
             // 确保在 UI 线程中创建
             Application.Current.Dispatcher.Invoke(() =>
             {
                 _notifyIcon = new NotifyIcon
                 {
-                    Icon = _normalIcon,
+                    Icon = _normalIcon ?? SystemIcons.Application,
                     Visible = true,
                     Text = "语音输入法 - 按住 F3 录音"
                 };
@@ -70,8 +75,8 @@ namespace VoiceInput.Core
         {
             if (_notifyIcon != null)
             {
-                _notifyIcon.Icon = isRecording ? _recordingIcon : _normalIcon;
-                _notifyIcon.Text = isRecording ? "语音输入法 - 录音中..." : "语音输入法";
+                _notifyIcon.Icon = isRecording ? (_recordingIcon ?? SystemIcons.Information) : (_normalIcon ?? SystemIcons.Application);
+                _notifyIcon.Text = isRecording ? "语音输入法 - 录音中..." : "语音输入法 - 按住 F3 录音";
             }
         }
 
@@ -89,6 +94,33 @@ namespace VoiceInput.Core
         private void OnExitClick(object? sender, EventArgs e)
         {
             Application.Current.Shutdown();
+        }
+
+        private void LoadIcons()
+        {
+            try
+            {
+                // 尝试从嵌入资源加载图标
+                var assembly = Assembly.GetExecutingAssembly();
+                var iconResourceName = "VoiceInput.Resources.Icons.VoiceInput.ico";
+                
+                using (var stream = assembly.GetManifestResourceStream(iconResourceName))
+                {
+                    if (stream != null)
+                    {
+                        _normalIcon = new Icon(stream);
+                        // 录音时使用相同图标，可以考虑创建不同的图标
+                        _recordingIcon = new Icon(stream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"加载图标失败: {ex.Message}");
+                // 如果加载失败，使用系统默认图标
+                _normalIcon = SystemIcons.Application;
+                _recordingIcon = SystemIcons.Information;
+            }
         }
 
         public void ShowBalloonTip(string title, string text, ToolTipIcon icon = ToolTipIcon.Info)

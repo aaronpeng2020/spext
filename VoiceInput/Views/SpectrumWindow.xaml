@@ -1,0 +1,32 @@
+<Window x:Class="VoiceInput.Views.SpectrumWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="SpectrumWindow" 
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        Width="100"
+        Height="20">
+    
+    <Border x:Name="WaveformBorder" 
+            Background="Transparent"
+            CornerRadius="4"
+            Margin="1">
+        <!-- 移除阴影效果 -->
+        
+        <!-- 极简频谱条容器 -->
+        <UniformGrid x:Name="SpectrumGrid" 
+                     Rows="1"
+                     Columns="20"
+                     Margin="1">
+            <!-- 频谱条将在代码中动态创建 -->
+        </UniformGrid>
+    </Border>
+</Window>

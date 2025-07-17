@@ -27,7 +27,17 @@ namespace VoiceInput.Services
 
         public void MuteSystemAudio()
         {
-            if (_isMuted || _deviceEnumerator == null) return;
+            if (_isMuted)
+            {
+                LoggerService.Log("系统音频已经处于静音状态，跳过操作");
+                return;
+            }
+            
+            if (_deviceEnumerator == null)
+            {
+                LoggerService.Log("音频设备枚举器未初始化");
+                return;
+            }
 
             try
             {
@@ -60,9 +70,16 @@ namespace VoiceInput.Services
                                     var key = $"session_{i}";
                                     _sessionVolumes[key] = currentVolume;
                                     
-                                    // 设置音量为0
-                                    simpleVolume.Volume = 0.0f;
-                                    LoggerService.Log($"已静音会话 {i + 1} (原音量: {currentVolume:P0})");
+                                    // 只有当前音量大于0时才静音，避免保存错误的音量值
+                                    if (currentVolume > 0)
+                                    {
+                                        simpleVolume.Volume = 0.0f;
+                                        LoggerService.Log($"已静音会话 {i + 1} (原音量: {currentVolume:P0})");
+                                    }
+                                    else
+                                    {
+                                        LoggerService.Log($"会话 {i + 1} 音量已经是0，跳过静音");
+                                    }
                                 }
                             }
                             catch (Exception ex)
@@ -102,13 +119,39 @@ namespace VoiceInput.Services
                             var session = sessions[i];
                             var key = $"session_{i}";
                             
-                            if (_sessionVolumes.ContainsKey(key))
+                            var simpleVolume = session.SimpleAudioVolume;
+                            if (simpleVolume != null)
                             {
-                                var simpleVolume = session.SimpleAudioVolume;
-                                if (simpleVolume != null)
+                                if (_sessionVolumes.ContainsKey(key))
                                 {
-                                    simpleVolume.Volume = _sessionVolumes[key];
-                                    LoggerService.Log($"已恢复会话 {i + 1} 音量到 {_sessionVolumes[key]:P0}");
+                                    var savedVolume = _sessionVolumes[key];
+                                    // 只恢复有效的音量值
+                                    if (savedVolume > 0)
+                                    {
+                                        simpleVolume.Volume = savedVolume;
+                                        LoggerService.Log($"已恢复会话 {i + 1} 音量到 {savedVolume:P0}");
+                                    }
+                                    else
+                                    {
+                                        // 如果保存的音量是0，恢复到默认音量
+                                        simpleVolume.Volume = 1.0f;
+                                        LoggerService.Log($"会话 {i + 1} 保存的音量为0，恢复到100%");
+                                    }
+                                }
+                                else
+                                {
+                                    // 如果没有保存的音量，检查当前音量
+                                    var currentVolume = simpleVolume.Volume;
+                                    if (currentVolume == 0)
+                                    {
+                                        // 只有当前音量是0时才恢复到默认值
+                                        simpleVolume.Volume = 1.0f;
+                                        LoggerService.Log($"会话 {i + 1} 没有保存的音量且当前为0，恢复到100%");
+                                    }
+                                    else
+                                    {
+                                        LoggerService.Log($"会话 {i + 1} 没有保存的音量，保持当前音量 {currentVolume:P0}");
+                                    }
                                 }
                             }
                         }
@@ -126,6 +169,61 @@ namespace VoiceInput.Services
             catch (Exception ex)
             {
                 LoggerService.Log($"恢复系统音频失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 强制恢复所有音频会话到100%音量
+        /// 用于紧急恢复音频或修复异常情况
+        /// </summary>
+        public void ForceRestoreAllAudio()
+        {
+            try
+            {
+                LoggerService.Log("正在强制恢复所有音频会话...");
+                
+                var deviceEnumerator = new MMDeviceEnumerator();
+                var device = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                
+                if (device != null)
+                {
+                    var sessionManager = device.AudioSessionManager;
+                    if (sessionManager != null)
+                    {
+                        var sessions = sessionManager.Sessions;
+                        int restoredCount = 0;
+                        
+                        for (int i = 0; i < sessions.Count; i++)
+                        {
+                            try
+                            {
+                                var session = sessions[i];
+                                var simpleVolume = session.SimpleAudioVolume;
+                                
+                                if (simpleVolume != null && simpleVolume.Volume == 0)
+                                {
+                                    simpleVolume.Volume = 1.0f;
+                                    restoredCount++;
+                                    LoggerService.Log($"已强制恢复会话 {i + 1} 到100%");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                LoggerService.Log($"强制恢复会话 {i + 1} 失败: {ex.Message}");
+                            }
+                        }
+                        
+                        LoggerService.Log($"强制恢复完成，共恢复 {restoredCount} 个静音会话");
+                    }
+                }
+                
+                // 清理状态
+                _sessionVolumes.Clear();
+                _isMuted = false;
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"强制恢复音频失败: {ex.Message}");
             }
         }
 

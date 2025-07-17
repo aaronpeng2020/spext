@@ -1,1 +1,3 @@
-使用@commit-rules.md 生成commit，并自动git psuh
+自动化提交Commit
+1.根据近期变更生成标准commit消息
+2.执行git push推送变更

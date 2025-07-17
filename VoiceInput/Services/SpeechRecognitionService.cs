@@ -14,6 +14,8 @@ namespace VoiceInput.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ConfigManager _configManager;
+        private const int MaxRetries = 2;
+        private const int RetryDelayMs = 1000;
 
         public SpeechRecognitionService(ConfigManager configManager)
         {
@@ -55,7 +57,12 @@ namespace VoiceInput.Services
                 throw new InvalidOperationException("API密钥未配置，请在设置中配置您的OpenAI API密钥");
             }
 
+            // 记录详细的API调用信息
             LoggerService.Log("准备调用OpenAI Whisper API...");
+            LoggerService.Log($"模型: {_configManager.WhisperModel}");
+            LoggerService.Log($"语言: {_configManager.WhisperLanguage}");
+            LoggerService.Log($"输出模式: {_configManager.WhisperOutputMode}");
+            LoggerService.Log($"音频大小: {audioData.Length / 1024.0:F2} KB");
 
             using var formData = new MultipartFormDataContent();
             
@@ -68,63 +75,107 @@ namespace VoiceInput.Services
             formData.Add(new StringContent(_configManager.WhisperModel), "model");
             
             // 添加响应格式
-            formData.Add(new StringContent("json"), "response_format");
+            formData.Add(new StringContent(_configManager.WhisperResponseFormat), "response_format");
+            
+            // 添加语言参数（如果不是自动检测）
+            if (!string.IsNullOrEmpty(_configManager.WhisperLanguage) && _configManager.WhisperLanguage != "auto")
+            {
+                formData.Add(new StringContent(_configManager.WhisperLanguage), "language");
+            }
+            
+            // 添加Temperature参数
+            if (_configManager.WhisperTemperature != 0.0)
+            {
+                formData.Add(new StringContent(_configManager.WhisperTemperature.ToString()), "temperature");
+            }
 
             // 设置认证头
             _httpClient.DefaultRequestHeaders.Authorization = 
                 new AuthenticationHeaderValue("Bearer", _configManager.ApiKey);
 
-            try
+            // 根据输出模式选择API端点
+            string apiUrl = _configManager.WhisperBaseUrl;
+            if (_configManager.WhisperOutputMode == "translation")
             {
-                LoggerService.Log($"发送请求到 {_configManager.WhisperBaseUrl}");
-                var response = await _httpClient.PostAsync(_configManager.WhisperBaseUrl, formData);
-                
-                if (!response.IsSuccessStatusCode)
+                apiUrl = apiUrl.Replace("transcriptions", "translations");
+            }
+            
+            // 实现重试机制
+            for (int attempt = 0; attempt <= MaxRetries; attempt++)
+            {
+                try
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    LoggerService.Log($"API返回错误: {response.StatusCode} - {errorContent}");
+                    if (attempt > 0)
+                    {
+                        LoggerService.Log($"重试第 {attempt} 次...");
+                        await Task.Delay(RetryDelayMs * attempt);
+                    }
                     
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    LoggerService.Log($"发送请求到 {apiUrl}");
+                    var startTime = DateTime.Now;
+                    var response = await _httpClient.PostAsync(apiUrl, formData);
+                    var elapsed = (DateTime.Now - startTime).TotalMilliseconds;
+                    LoggerService.Log($"API响应时间: {elapsed:F0}ms");
+                
+                    if (!response.IsSuccessStatusCode)
                     {
-                        throw new Exception("API密钥无效或已过期");
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        LoggerService.Log($"API返回错误: {response.StatusCode} - {errorContent}");
+                        
+                        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                        {
+                            throw new Exception("API密钥无效或已过期");
+                        }
+                        else if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                        {
+                            if (attempt < MaxRetries)
+                            {
+                                LoggerService.Log("API请求频率超限，准备重试");
+                                continue;
+                            }
+                            throw new Exception("API请求频率超限，请稍后再试");
+                        }
+                        else
+                        {
+                            throw new Exception($"API请求失败: {response.StatusCode}");
+                        }
                     }
-                    else if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-                    {
-                        throw new Exception("API请求频率超限，请稍后再试");
-                    }
-                    else
-                    {
-                        throw new Exception($"API请求失败: {response.StatusCode}");
-                    }
-                }
 
-                var json = await response.Content.ReadAsStringAsync();
-                LoggerService.Log("收到API响应");
-                
-                var result = JsonConvert.DeserializeObject<WhisperResponse>(json);
-                
-                if (result?.Text != null)
-                {
-                    LoggerService.Log($"识别结果: {result.Text}");
+                    var json = await response.Content.ReadAsStringAsync();
+                    LoggerService.Log("收到API响应");
+                    
+                    var result = JsonConvert.DeserializeObject<WhisperResponse>(json);
+                    
+                    if (result?.Text != null)
+                    {
+                        LoggerService.Log($"识别结果: {result.Text}");
+                        LoggerService.Log($"结果长度: {result.Text.Length} 字符");
+                        
+                        // 移除前后空白
+                        result.Text = result.Text.Trim();
+                    }
+                    
+                    return result?.Text ?? string.Empty;
                 }
-                
-                return result?.Text ?? string.Empty;
+                catch (HttpRequestException ex) when (attempt < MaxRetries)
+                {
+                    LoggerService.Log($"网络请求失败，准备重试: {ex.Message}");
+                    continue;
+                }
+                catch (TaskCanceledException) when (attempt < MaxRetries)
+                {
+                    LoggerService.Log($"请求超时，准备重试");
+                    continue;
+                }
+                catch (Exception ex) when (attempt < MaxRetries && !(ex.Message.Contains("API密钥")))
+                {
+                    LoggerService.Log($"请求失败，准备重试: {ex.Message}");
+                    continue;
+                }
             }
-            catch (HttpRequestException ex)
-            {
-                LoggerService.Log($"网络请求失败: {ex.Message}");
-                throw new Exception($"语音识别请求失败: {ex.Message}", ex);
-            }
-            catch (TaskCanceledException)
-            {
-                LoggerService.Log("请求超时");
-                throw new Exception($"语音识别请求超时（{_configManager.WhisperTimeout}秒）");
-            }
-            catch (Exception ex)
-            {
-                LoggerService.Log($"未知错误: {ex.Message}");
-                throw;
-            }
+            
+            // 如果所有重试都失败，抛出异常
+            throw new Exception("语音识别请求失败，已达到最大重试次数");
         }
 
         private class WhisperResponse

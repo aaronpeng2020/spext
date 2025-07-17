@@ -31,51 +31,26 @@
             </StackPanel>
         </Border>
         
-        <!-- 音频波形设置 -->
+        <!-- 频谱显示设置 -->
         <Border Style="{StaticResource CardStyle}">
             <StackPanel>
-                <TextBlock Text="音频波形显示" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                <TextBlock Text="频谱显示" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
                 
                 <CheckBox x:Name="ShowWaveformCheckBox" 
-                        Content="录音时显示音频波形" 
+                        Content="录音时显示频谱" 
                         IsChecked="True"
                         Style="{StaticResource ModernCheckBoxStyle}"
                         Checked="ShowWaveformCheckBox_Changed"
                         Unchecked="ShowWaveformCheckBox_Changed"/>
-                <TextBlock Text="在屏幕底部显示实时音频波形，直观展示录音状态" 
+                <TextBlock Text="在屏幕底部显示实时音频频谱，直观展示录音状态" 
                          Foreground="{DynamicResource TextSecondaryBrush}" 
                          FontSize="12" 
                          Margin="24,4,0,0"/>
                 
                 <StackPanel x:Name="WaveformSettingsPanel" Margin="0,16,0,0">
-                    <!-- 波形高度 -->
-                    <Label Content="波形高度（像素）" Style="{StaticResource ModernLabelStyle}"/>
-                    <ui:NumberBox x:Name="WaveformHeightBox" 
-                                Value="100"
-                                Minimum="50"
-                                Maximum="200"
-                                SmallChange="10"
-                                LargeChange="25"
-                                SpinButtonPlacementMode="Inline"/>
-                    <TextBlock Text="调整音频波形窗口的高度" 
-                             Foreground="{DynamicResource TextSecondaryBrush}" 
-                             FontSize="12" 
-                             Margin="0,4,0,16"/>
-                    
-                    <!-- 波形颜色方案 -->
-                    <Label Content="波形配色" Style="{StaticResource ModernLabelStyle}"/>
-                    <ComboBox x:Name="WaveformColorComboBox" 
-                            Style="{StaticResource ModernComboBoxStyle}"
-                            SelectedIndex="0">
-                        <ComboBoxItem Content="蓝色渐变" Tag="Blue"/>
-                        <ComboBoxItem Content="绿色渐变" Tag="Green"/>
-                        <ComboBoxItem Content="紫色渐变" Tag="Purple"/>
-                        <ComboBoxItem Content="彩虹渐变" Tag="Rainbow"/>
-                    </ComboBox>
-                    <TextBlock Text="选择音频波形的配色方案" 
-                             Foreground="{DynamicResource TextSecondaryBrush}" 
-                             FontSize="12" 
-                             Margin="0,4,0,0"/>
+                    <!-- 频谱高度（已废弃，使用固定高度） -->
+                    <Label Content="频谱样式" Style="{StaticResource ModernLabelStyle}" Visibility="Collapsed"/>
+                    <!-- 极简风格，移除所有自定义选项 -->
                 </StackPanel>
             </StackPanel>
         </Border>

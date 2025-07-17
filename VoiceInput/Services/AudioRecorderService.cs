@@ -14,6 +14,7 @@ namespace VoiceInput.Services
         
         public event EventHandler<bool>? RecordingStateChanged;
         public event EventHandler<byte[]>? RecordingCompleted;
+        public event EventHandler<float[]>? AudioDataAvailable;
 
         public bool IsRecording { get; private set; }
 
@@ -108,6 +109,28 @@ namespace VoiceInput.Services
         private void OnDataAvailable(object? sender, WaveInEventArgs e)
         {
             _waveWriter?.Write(e.Buffer, 0, e.BytesRecorded);
+            
+            // 转换音频数据为float数组用于波形显示
+            if (AudioDataAvailable != null && e.BytesRecorded > 0)
+            {
+                var floatSamples = ConvertToFloatArray(e.Buffer, e.BytesRecorded);
+                AudioDataAvailable.Invoke(this, floatSamples);
+            }
+        }
+        
+        private float[] ConvertToFloatArray(byte[] buffer, int bytesRecorded)
+        {
+            var sampleCount = bytesRecorded / 2; // 16-bit samples
+            var samples = new float[sampleCount];
+            
+            for (int i = 0; i < sampleCount; i++)
+            {
+                // 将16位音频数据转换为float (-1.0 to 1.0)
+                short sample = BitConverter.ToInt16(buffer, i * 2);
+                samples[i] = sample / 32768.0f;
+            }
+            
+            return samples;
         }
 
         public void Dispose()

@@ -68,6 +68,14 @@ namespace VoiceInput.Services
         public string WhisperBaseUrl => _configuration["VoiceInput:WhisperAPI:BaseUrl"] ?? "https://api.openai.com/v1/audio/transcriptions";
         
         public int WhisperTimeout => int.TryParse(_configuration["VoiceInput:WhisperAPI:Timeout"], out var timeout) ? timeout : 30;
+        
+        public string WhisperLanguage => _configuration["VoiceInput:WhisperAPI:Language"] ?? "auto";
+        
+        public string WhisperOutputMode => _configuration["VoiceInput:WhisperAPI:OutputMode"] ?? "transcription";
+        
+        public double WhisperTemperature => double.TryParse(_configuration["VoiceInput:WhisperAPI:Temperature"], out var temp) ? temp : 0.0;
+        
+        public string WhisperResponseFormat => _configuration["VoiceInput:WhisperAPI:ResponseFormat"] ?? "json";
 
         public string? ApiKey 
         { 
@@ -213,9 +221,49 @@ namespace VoiceInput.Services
             }
         }
 
+        // UI设置
+        public string UITheme
+        {
+            get => _configuration["VoiceInput:UI:Theme"] ?? "Light";
+            set => SaveSetting("VoiceInput:UI:Theme", value);
+        }
+        
+        public bool ShowWaveform
+        {
+            get => bool.TryParse(_configuration["VoiceInput:UI:ShowWaveform"], out var result) && result;
+            set => SaveSetting("VoiceInput:UI:ShowWaveform", value.ToString());
+        }
+        
+        public int WaveformHeight
+        {
+            get => int.TryParse(_configuration["VoiceInput:UI:WaveformHeight"], out var height) ? height : 100;
+            set => SaveSetting("VoiceInput:UI:WaveformHeight", value.ToString());
+        }
+        
+        public string WaveformColor
+        {
+            get => _configuration["VoiceInput:UI:WaveformColor"] ?? "Blue";
+            set => SaveSetting("VoiceInput:UI:WaveformColor", value);
+        }
+        
+        public bool MinimizeToTray
+        {
+            get => bool.TryParse(_configuration["VoiceInput:UI:MinimizeToTray"], out var result) && result;
+            set => SaveSetting("VoiceInput:UI:MinimizeToTray", value.ToString());
+        }
+
         public void SaveHotkey(string hotkey)
         {
             SaveSetting("VoiceInput:Hotkey", hotkey);
+        }
+        
+        public void SaveWhisperSettings(string baseUrl, int timeout, string language, string outputMode, double temperature)
+        {
+            SaveSetting("VoiceInput:WhisperAPI:BaseUrl", baseUrl);
+            SaveSetting("VoiceInput:WhisperAPI:Timeout", timeout.ToString());
+            SaveSetting("VoiceInput:WhisperAPI:Language", language);
+            SaveSetting("VoiceInput:WhisperAPI:OutputMode", outputMode);
+            SaveSetting("VoiceInput:WhisperAPI:Temperature", temperature.ToString());
         }
     }
 }

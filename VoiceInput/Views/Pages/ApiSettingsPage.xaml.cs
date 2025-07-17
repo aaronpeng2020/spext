@@ -27,43 +27,71 @@ namespace VoiceInput.Views.Pages
             // 加载超时设置
             TimeoutBox.Value = _configManager.WhisperTimeout;
 
-            // TODO: 加载语言设置（需要扩展ConfigManager）
-            // 暂时使用默认值
-            InputLanguageComboBox.SelectedIndex = 0; // 自动检测
-            OutputModeComboBox.SelectedIndex = 0; // 原语言转录
+            // 加载语言设置
+            SetLanguageSelection(_configManager.WhisperLanguage);
             
-            // TODO: 加载Temperature设置（需要扩展ConfigManager）
-            TemperatureBox.Value = 0.0;
+            // 加载输出模式
+            SetOutputModeSelection(_configManager.WhisperOutputMode);
+            
+            // 加载Temperature设置
+            TemperatureBox.Value = _configManager.WhisperTemperature;
+        }
+        
+        private void SetLanguageSelection(string language)
+        {
+            for (int i = 0; i < InputLanguageComboBox.Items.Count; i++)
+            {
+                if (InputLanguageComboBox.Items[i] is ComboBoxItem item && item.Tag?.ToString() == language)
+                {
+                    InputLanguageComboBox.SelectedIndex = i;
+                    return;
+                }
+            }
+            InputLanguageComboBox.SelectedIndex = 0; // 默认自动检测
+        }
+        
+        private void SetOutputModeSelection(string mode)
+        {
+            for (int i = 0; i < OutputModeComboBox.Items.Count; i++)
+            {
+                if (OutputModeComboBox.Items[i] is ComboBoxItem item && item.Tag?.ToString() == mode)
+                {
+                    OutputModeComboBox.SelectedIndex = i;
+                    return;
+                }
+            }
+            OutputModeComboBox.SelectedIndex = 0; // 默认原语言转录
         }
 
         public void SaveSettings()
         {
-            // 保存模型（目前只支持whisper-1，所以暂时不保存）
-            
             // 保存API URL
             var apiUrl = ApiUrlBox.Text.Trim();
-            if (!string.IsNullOrEmpty(apiUrl))
+            if (string.IsNullOrEmpty(apiUrl))
             {
-                // TODO: 需要在ConfigManager中添加保存WhisperBaseUrl的方法
-                // _configManager.SaveWhisperBaseUrl(apiUrl);
+                apiUrl = "https://api.openai.com/v1/audio/transcriptions";
             }
-
+            
             // 保存超时设置
+            int timeout = 30;
             if (!double.IsNaN(TimeoutBox.Value))
             {
-                // TODO: 需要在ConfigManager中添加保存WhisperTimeout的方法
-                // _configManager.SaveWhisperTimeout((int)TimeoutBox.Value);
+                timeout = (int)TimeoutBox.Value;
             }
-
-            // TODO: 保存语言设置
-            var selectedLanguage = (InputLanguageComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-            var selectedMode = (OutputModeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             
-            // TODO: 保存Temperature设置
+            // 保存语言设置
+            var selectedLanguage = (InputLanguageComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
+            var selectedMode = (OutputModeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "transcription";
+            
+            // 保存Temperature设置
+            double temperature = 0.0;
             if (!double.IsNaN(TemperatureBox.Value))
             {
-                // _configManager.SaveTemperature(TemperatureBox.Value);
+                temperature = TemperatureBox.Value;
             }
+            
+            // 保存所有Whisper设置
+            _configManager.SaveWhisperSettings(apiUrl, timeout, selectedLanguage, selectedMode, temperature);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using VoiceInput.Services;
+using VoiceInput.Views;
 
 namespace VoiceInput.Core
 {
@@ -13,6 +14,7 @@ namespace VoiceInput.Core
         private readonly TrayIcon _trayIcon;
         private readonly AudioMuteService _audioMuteService;
         private readonly ConfigManager _configManager;
+        private readonly SpectrumWindow _spectrumWindow;
         private bool _isProcessing;
 
         public VoiceInputController(
@@ -31,6 +33,7 @@ namespace VoiceInput.Core
             _trayIcon = trayIcon;
             _audioMuteService = audioMuteService;
             _configManager = configManager;
+            _spectrumWindow = new SpectrumWindow(configManager);
         }
 
         public void Initialize()
@@ -40,6 +43,7 @@ namespace VoiceInput.Core
                 _hotkeyService.Initialize();
                 _hotkeyService.HotkeyPressed += OnHotkeyPressed;
                 _audioRecorder.RecordingCompleted += OnRecordingCompleted;
+                _audioRecorder.AudioDataAvailable += OnAudioDataAvailable;
                 LoggerService.Log("语音输入控制器初始化完成");
             }
             catch (Exception ex)
@@ -54,28 +58,47 @@ namespace VoiceInput.Core
         {
             if (_isProcessing) return;
 
-            if (isPressed)
+            try
             {
-                LoggerService.Log("F3 按下 - 开始录音");
-                
-                // 如果启用了静音功能，则静音系统音频
-                if (_configManager.MuteWhileRecording)
+                if (isPressed)
                 {
-                    _audioMuteService.MuteSystemAudio();
+                    LoggerService.Log("F3 按下 - 开始录音");
+                    
+                    // 如果启用了静音功能，则静音系统音频
+                    if (_configManager.MuteWhileRecording)
+                    {
+                        _audioMuteService.MuteSystemAudio();
+                    }
+                    
+                    _audioRecorder.StartRecording();
+                    
+                    // 在UI线程上调用SpectrumWindow的方法
+                    _spectrumWindow.Dispatcher.Invoke(() =>
+                    {
+                        _spectrumWindow.StartRecording();
+                    });
                 }
-                
-                _audioRecorder.StartRecording();
+                else
+                {
+                    LoggerService.Log("F3 释放 - 停止录音");
+                    _audioRecorder.StopRecording();
+                    
+                    // 在UI线程上调用SpectrumWindow的方法
+                    _spectrumWindow.Dispatcher.Invoke(() =>
+                    {
+                        _spectrumWindow.StopRecording();
+                    });
+                    
+                    // 恢复系统音频
+                    if (_configManager.MuteWhileRecording)
+                    {
+                        _audioMuteService.UnmuteSystemAudio();
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                LoggerService.Log("F3 释放 - 停止录音");
-                _audioRecorder.StopRecording();
-                
-                // 恢复系统音频
-                if (_configManager.MuteWhileRecording)
-                {
-                    _audioMuteService.UnmuteSystemAudio();
-                }
+                LoggerService.Log($"热键处理异常: {ex.Message}");
             }
         }
 
@@ -125,6 +148,15 @@ namespace VoiceInput.Core
             {
                 _isProcessing = false;
             }
+        }
+        
+        private void OnAudioDataAvailable(object? sender, float[] audioData)
+        {
+            // 将音频数据传递给频谱窗口（在UI线程上执行）
+            _spectrumWindow.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _spectrumWindow.UpdateAudioData(audioData);
+            }));
         }
     }
 }

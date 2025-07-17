@@ -20,52 +20,46 @@ namespace VoiceInput.Views.Pages
 
         private void LoadSettings()
         {
-            // TODO: 从ConfigManager加载UI设置
-            // 暂时使用默认值
-            
             // 主题设置
-            var currentTheme = ThemeManager.Current.ActualApplicationTheme;
-            ThemeComboBox.SelectedIndex = currentTheme == ApplicationTheme.Dark ? 1 : 0;
+            var theme = _configManager.UITheme;
+            SetThemeSelection(theme);
             
-            // 波形显示设置
-            ShowWaveformCheckBox.IsChecked = true; // TODO: 从配置加载
-            WaveformHeightBox.Value = 100; // TODO: 从配置加载
-            WaveformColorComboBox.SelectedIndex = 0; // TODO: 从配置加载
+            // 频谱显示设置
+            ShowWaveformCheckBox.IsChecked = _configManager.ShowWaveform;
             
             // 窗口行为设置
-            MinimizeToTrayCheckBox.IsChecked = true; // TODO: 从配置加载
+            MinimizeToTrayCheckBox.IsChecked = _configManager.MinimizeToTray;
             
             UpdateWaveformSettingsVisibility();
         }
+        
+        private void SetThemeSelection(string theme)
+        {
+            for (int i = 0; i < ThemeComboBox.Items.Count; i++)
+            {
+                if (ThemeComboBox.Items[i] is ComboBoxItem item && item.Tag?.ToString() == theme)
+                {
+                    ThemeComboBox.SelectedIndex = i;
+                    return;
+                }
+            }
+            ThemeComboBox.SelectedIndex = 0; // 默认浅色
+        }
+        
 
         public void SaveSettings()
         {
-            // TODO: 保存UI设置到ConfigManager
-            
             // 保存主题设置
-            var selectedTheme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-            // TODO: _configManager.SaveTheme(selectedTheme);
+            var selectedTheme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Light";
+            _configManager.UITheme = selectedTheme;
             
-            // 保存波形显示设置
+            // 保存频谱显示设置
             var showWaveform = ShowWaveformCheckBox.IsChecked ?? false;
-            // TODO: _configManager.SaveShowWaveform(showWaveform);
-            
-            if (showWaveform)
-            {
-                // 保存波形高度
-                if (!double.IsNaN(WaveformHeightBox.Value))
-                {
-                    // TODO: _configManager.SaveWaveformHeight((int)WaveformHeightBox.Value);
-                }
-                
-                // 保存波形颜色
-                var selectedColor = (WaveformColorComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-                // TODO: _configManager.SaveWaveformColor(selectedColor);
-            }
+            _configManager.ShowWaveform = showWaveform;
             
             // 保存窗口行为设置
             var minimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? false;
-            // TODO: _configManager.SaveMinimizeToTray(minimizeToTray);
+            _configManager.MinimizeToTray = minimizeToTray;
         }
 
         private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
