@@ -44,7 +44,7 @@ namespace VoiceInput.Core
                 _hotkeyService.HotkeyPressed += OnHotkeyPressed;
                 _audioRecorder.RecordingCompleted += OnRecordingCompleted;
                 _audioRecorder.AudioDataAvailable += OnAudioDataAvailable;
-                LoggerService.Log("语音输入控制器初始化完成");
+                LoggerService.Log("Spext 控制器初始化完成");
             }
             catch (Exception ex)
             {
@@ -135,14 +135,14 @@ namespace VoiceInput.Core
                 {
                     LoggerService.Log("未识别到内容");
                     // 保留警告提示，因为用户需要知道没有识别到内容
-                    _trayIcon.ShowBalloonTip("语音输入", "未识别到内容", System.Windows.Forms.ToolTipIcon.Warning);
+                    _trayIcon.ShowBalloonTip("Spext", "未识别到内容", System.Windows.Forms.ToolTipIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
                 LoggerService.Log($"识别失败: {ex.Message}");
                 // 保留错误提示，因为用户需要知道出错了
-                _trayIcon.ShowBalloonTip("语音输入", $"识别失败: {ex.Message}", System.Windows.Forms.ToolTipIcon.Error);
+                _trayIcon.ShowBalloonTip("Spext", $"识别失败: {ex.Message}", System.Windows.Forms.ToolTipIcon.Error);
             }
             finally
             {
@@ -157,6 +157,20 @@ namespace VoiceInput.Core
             {
                 _spectrumWindow.UpdateAudioData(audioData);
             }));
+        }
+        
+        public void UpdateHotkey(string newHotkey)
+        {
+            try
+            {
+                LoggerService.Log($"正在更新热键为: {newHotkey}");
+                _hotkeyService.UpdateHotkey(newHotkey);
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"更新热键失败: {ex.Message}");
+                throw;
+            }
         }
     }
 }

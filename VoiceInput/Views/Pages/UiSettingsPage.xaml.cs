@@ -49,17 +49,16 @@ namespace VoiceInput.Views.Pages
 
         public void SaveSettings()
         {
-            // 保存主题设置
-            var selectedTheme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Light";
-            _configManager.UITheme = selectedTheme;
+            // 准备批量保存的设置
+            var settings = new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["VoiceInput:UI:Theme"] = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Light",
+                ["VoiceInput:UI:ShowWaveform"] = (ShowWaveformCheckBox.IsChecked ?? false).ToString(),
+                ["VoiceInput:UI:MinimizeToTray"] = (MinimizeToTrayCheckBox.IsChecked ?? false).ToString()
+            };
             
-            // 保存频谱显示设置
-            var showWaveform = ShowWaveformCheckBox.IsChecked ?? false;
-            _configManager.ShowWaveform = showWaveform;
-            
-            // 保存窗口行为设置
-            var minimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? false;
-            _configManager.MinimizeToTray = minimizeToTray;
+            // 批量保存所有UI设置
+            _configManager.SaveSettingsBatch(settings);
         }
 
         private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

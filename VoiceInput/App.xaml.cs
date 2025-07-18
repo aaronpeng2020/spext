@@ -21,18 +21,18 @@ namespace VoiceInput
         protected override void OnStartup(StartupEventArgs e)
         {
             // 单实例检查
-            _mutex = new Mutex(true, "VoiceInput_SingleInstance", out bool createdNew);
+            _mutex = new Mutex(true, "Spext_SingleInstance", out bool createdNew);
             
             if (!createdNew)
             {
-                MessageBox.Show("语音输入法已经在运行中。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Spext 已经在运行中。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                 Shutdown();
                 return;
             }
 
             // 使用日志服务
             LoggerService.Log("===============================================");
-            LoggerService.Log("语音输入法正在启动...");
+            LoggerService.Log("Spext 正在启动...");
             LoggerService.Log($"日志文件位置: {LoggerService.GetLogFilePath()}");
             LoggerService.Log("请查看系统托盘图标");
             LoggerService.Log("按住 F3 键开始录音");
@@ -57,7 +57,7 @@ namespace VoiceInput
             var controller = _serviceProvider.GetRequiredService<VoiceInputController>();
             controller.Initialize();
 
-            LoggerService.Log("语音输入法启动成功！");
+            LoggerService.Log("Spext 启动成功！");
 
             base.OnStartup(e);
         }
@@ -83,6 +83,11 @@ namespace VoiceInput
             services.AddSingleton<TextInputService>();
             services.AddSingleton<ConfigManager>();
             services.AddSingleton<VoiceInputController>();
+        }
+
+        public IServiceProvider? GetServiceProvider()
+        {
+            return _serviceProvider;
         }
 
         protected override void OnExit(ExitEventArgs e)

@@ -18,26 +18,32 @@
 - `VoiceInput\Resources\Icons\microphone.png` - PNG格式的麦克风图标
 - `VoiceInput\Resources\Icons\VoiceInputLogo.xaml` - XAML格式的矢量图标
 
-## 修复步骤
+## 已实施的修复
 
-### 方案一：创建ICO文件（推荐）
-1. 将现有的 `microphone.png` 转换为 `.ico` 格式
-2. 将文件命名为 `VoiceInput.ico` 并放置在 `Resources\Icons\` 目录下
-3. 确保项目文件正确包含该资源
+### 1. 修改了图标加载逻辑
+修改了 `TrayIcon.cs` 中的 `LoadIcons()` 方法，改为加载现有的 `microphone.png` 文件：
+- 从文件系统加载PNG文件
+- 使用 `Bitmap` 和 `Icon.FromHandle()` 方法创建图标
+- 添加了更详细的错误日志记录
 
-### 方案二：修改代码使用PNG
-1. 修改 `TrayIcon.cs` 中的 `LoadIcons()` 方法
-2. 改为加载 `microphone.png` 文件
-3. 使用 `Bitmap` 和 `Icon.FromHandle()` 方法创建图标
+### 2. 更新了项目配置
+修改了 `VoiceInput.csproj` 文件：
+- PNG文件设置为复制到输出目录（`CopyToOutputDirectory`）
+- 确保图标文件在运行时可用
 
-### 方案三：临时修复
-1. 确保 `TrayIcon` 的 `Visible` 属性始终为 `true`
-2. 使用更明显的系统图标作为临时方案
+### 3. 设置了窗口图标
+在 `SettingsWindow.xaml` 中添加了 `Icon` 属性：
+```xml
+Icon="/Resources/Icons/microphone.png"
+```
+
+## 修复状态
+**已修复** - 2025-07-17
 
 ## 附加建议
-1. **应用程序图标**：在 `VoiceInput.csproj` 中添加 `<ApplicationIcon>` 属性，指定应用程序图标
-2. **窗口图标**：在 `SettingsWindow.xaml` 中设置 `Icon` 属性
-3. **图标规格**：建议创建多尺寸的ICO文件（16x16, 32x32, 48x48, 256x256）
+1. **创建ICO文件**：建议将 `microphone.png` 转换为多尺寸的 `.ico` 文件（16x16, 32x32, 48x48, 256x256）
+2. **应用程序图标**：在 `VoiceInput.csproj` 中添加 `<ApplicationIcon>` 属性，指定应用程序主图标
+3. **状态图标**：可以考虑为录音状态创建不同的图标，以便用户能够直观地看到当前状态
 
 ## 测试验证
 修复后需要验证：

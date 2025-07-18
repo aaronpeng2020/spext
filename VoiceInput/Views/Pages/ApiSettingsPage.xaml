@@ -20,9 +20,11 @@
                 <ComboBox x:Name="ModelComboBox" 
                         Style="{StaticResource ModernComboBoxStyle}"
                         SelectedIndex="0">
-                    <ComboBoxItem Content="whisper-1 (默认)"/>
+                    <ComboBoxItem Content="whisper-1 (经典模型)" Tag="whisper-1"/>
+                    <ComboBoxItem Content="gpt-4o-mini-transcribe (快速，成本低)" Tag="gpt-4o-mini-transcribe"/>
+                    <ComboBoxItem Content="gpt-4o-transcribe (最准确)" Tag="gpt-4o-transcribe"/>
                 </ComboBox>
-                <TextBlock Text="选择要使用的Whisper模型" 
+                <TextBlock Text="选择要使用的语音识别模型，不同模型在准确度和成本上有所差异" 
                          Foreground="{DynamicResource TextSecondaryBrush}" 
                          FontSize="12" 
                          Margin="0,4,0,16"/>

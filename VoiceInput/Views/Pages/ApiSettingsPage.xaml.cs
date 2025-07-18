@@ -19,7 +19,7 @@ namespace VoiceInput.Views.Pages
         private void LoadSettings()
         {
             // 加载模型设置
-            ModelComboBox.SelectedIndex = 0; // 目前只有 whisper-1
+            SetModelSelection(_configManager.WhisperModel);
 
             // 加载 API URL
             ApiUrlBox.Text = _configManager.WhisperBaseUrl;
@@ -35,6 +35,19 @@ namespace VoiceInput.Views.Pages
             
             // 加载Temperature设置
             TemperatureBox.Value = _configManager.WhisperTemperature;
+        }
+        
+        private void SetModelSelection(string model)
+        {
+            for (int i = 0; i < ModelComboBox.Items.Count; i++)
+            {
+                if (ModelComboBox.Items[i] is ComboBoxItem item && item.Tag?.ToString() == model)
+                {
+                    ModelComboBox.SelectedIndex = i;
+                    return;
+                }
+            }
+            ModelComboBox.SelectedIndex = 0; // 默认 whisper-1
         }
         
         private void SetLanguageSelection(string language)
@@ -79,6 +92,9 @@ namespace VoiceInput.Views.Pages
                 timeout = (int)TimeoutBox.Value;
             }
             
+            // 保存模型设置
+            var selectedModel = (ModelComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "whisper-1";
+            
             // 保存语言设置
             var selectedLanguage = (InputLanguageComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
             var selectedMode = (OutputModeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "transcription";
@@ -90,8 +106,8 @@ namespace VoiceInput.Views.Pages
                 temperature = TemperatureBox.Value;
             }
             
-            // 保存所有Whisper设置
-            _configManager.SaveWhisperSettings(apiUrl, timeout, selectedLanguage, selectedMode, temperature);
+            // 保存所有Whisper设置（包括模型）
+            _configManager.SaveWhisperSettings(apiUrl, timeout, selectedLanguage, selectedMode, temperature, selectedModel);
         }
     }
 }

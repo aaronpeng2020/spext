@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,10 @@ namespace VoiceInput.Services
             {
                 configRoot.Reload();
                 LoggerService.Log("配置已重新加载");
+                
+                // 重新加载缓存的凭据，避免凭据丢失
+                LoadApiKey();
+                LoadProxyCredentials();
             }
         }
 
@@ -164,7 +169,7 @@ namespace VoiceInput.Services
             _cachedProxyPassword = password;
         }
 
-        private void SaveSetting(string key, string value)
+        public void SaveSetting(string key, string value)
         {
             try
             {
@@ -257,13 +262,121 @@ namespace VoiceInput.Services
             SaveSetting("VoiceInput:Hotkey", hotkey);
         }
         
-        public void SaveWhisperSettings(string baseUrl, int timeout, string language, string outputMode, double temperature)
+        // 批量保存方法，避免多次配置重载
+        public void SaveSettingsBatch(Dictionary<string, string> settings)
         {
-            SaveSetting("VoiceInput:WhisperAPI:BaseUrl", baseUrl);
-            SaveSetting("VoiceInput:WhisperAPI:Timeout", timeout.ToString());
-            SaveSetting("VoiceInput:WhisperAPI:Language", language);
-            SaveSetting("VoiceInput:WhisperAPI:OutputMode", outputMode);
-            SaveSetting("VoiceInput:WhisperAPI:Temperature", temperature.ToString());
+            try
+            {
+                // 获取配置文件路径
+                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+                
+                // 读取现有配置
+                string jsonString = File.ReadAllText(configPath);
+                var jsonObject = JObject.Parse(jsonString);
+                
+                // 批量更新所有设置
+                foreach (var kvp in settings)
+                {
+                    var keys = kvp.Key.Split(':');
+                    JToken currentToken = jsonObject;
+                    
+                    // 导航到父节点
+                    for (int i = 0; i < keys.Length - 1; i++)
+                    {
+                        if (currentToken[keys[i]] == null)
+                        {
+                            currentToken[keys[i]] = new JObject();
+                        }
+                        currentToken = currentToken[keys[i]];
+                    }
+                    
+                    // 设置最终值
+                    var lastKey = keys[keys.Length - 1];
+                    
+                    // 尝试将值转换为适当的类型
+                    if (bool.TryParse(kvp.Value, out bool boolValue))
+                    {
+                        currentToken[lastKey] = boolValue;
+                    }
+                    else if (int.TryParse(kvp.Value, out int intValue))
+                    {
+                        currentToken[lastKey] = intValue;
+                    }
+                    else
+                    {
+                        currentToken[lastKey] = kvp.Value;
+                    }
+                }
+                
+                // 保存回文件
+                string updatedJson = jsonObject.ToString(Formatting.Indented);
+                File.WriteAllText(configPath, updatedJson);
+                
+                LoggerService.Log($"批量保存了 {settings.Count} 个配置项");
+                
+                // 只重新加载一次配置
+                ReloadConfiguration();
+                
+                // 处理特殊逻辑
+                if (settings.ContainsKey("VoiceInput:AutoStart"))
+                {
+                    bool autoStart = bool.Parse(settings["VoiceInput:AutoStart"]);
+                    _autoStartService.UpdateAutoStart(autoStart);
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"批量保存配置失败: {ex.Message}");
+                throw;
+            }
+        }
+        
+        public void SaveWhisperSettings(string baseUrl, int timeout, string language, string outputMode, double temperature, string? model = null)
+        {
+            try
+            {
+                // 获取配置文件路径
+                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+                
+                // 读取现有配置
+                string jsonString = File.ReadAllText(configPath);
+                var jsonObject = JObject.Parse(jsonString);
+                
+                // 获取WhisperAPI节点
+                var whisperNode = jsonObject["VoiceInput"]["WhisperAPI"];
+                if (whisperNode == null)
+                {
+                    jsonObject["VoiceInput"]["WhisperAPI"] = new JObject();
+                    whisperNode = jsonObject["VoiceInput"]["WhisperAPI"];
+                }
+                
+                // 批量更新所有设置
+                whisperNode["BaseUrl"] = baseUrl;
+                whisperNode["Timeout"] = timeout;
+                whisperNode["Language"] = language;
+                whisperNode["OutputMode"] = outputMode;
+                whisperNode["Temperature"] = temperature;
+                
+                // 如果提供了模型参数，也保存模型
+                if (!string.IsNullOrEmpty(model))
+                {
+                    whisperNode["Model"] = model;
+                }
+                
+                // 保存回文件
+                string updatedJson = jsonObject.ToString(Formatting.Indented);
+                File.WriteAllText(configPath, updatedJson);
+                
+                LoggerService.Log($"Whisper设置已批量保存");
+                
+                // 只重新加载一次配置
+                ReloadConfiguration();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"保存Whisper设置失败: {ex.Message}");
+                throw;
+            }
         }
     }
 }

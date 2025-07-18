@@ -29,8 +29,13 @@
 
   <ItemGroup>
     <Resource Include="Resources\Icons\*.ico" />
-    <Resource Include="Resources\Icons\*.png" />
     <Resource Include="Resources\Icons\*.xaml" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Resources\Icons\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

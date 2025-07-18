@@ -47,22 +47,10 @@ namespace VoiceInput.Views.Pages
 
         public void SaveSettings()
         {
-            // 保存代理设置
-            _configManager.ProxyEnabled = ProxyEnabledCheckBox.IsChecked ?? false;
-            
-            // 无论代理是否启用，都保存代理地址和端口，以便用户下次启用时不需要重新输入
-            if (!string.IsNullOrWhiteSpace(ProxyAddressBox.Text))
-            {
-                _configManager.ProxyAddress = ProxyAddressBox.Text.Trim();
-            }
-            
-            if (!double.IsNaN(ProxyPortBox.Value) && ProxyPortBox.Value > 0 && ProxyPortBox.Value <= 65535)
-            {
-                _configManager.ProxyPort = (int)ProxyPortBox.Value;
-            }
+            bool proxyEnabled = ProxyEnabledCheckBox.IsChecked ?? false;
             
             // 如果代理启用，验证必填项
-            if (_configManager.ProxyEnabled)
+            if (proxyEnabled)
             {
                 // 验证代理地址和端口
                 if (string.IsNullOrWhiteSpace(ProxyAddressBox.Text))
@@ -76,10 +64,30 @@ namespace VoiceInput.Views.Pages
                 }
             }
             
-            // 保存认证设置
-            _configManager.ProxyRequiresAuthentication = ProxyAuthCheckBox.IsChecked ?? false;
+            // 准备批量保存的设置
+            var settings = new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["VoiceInput:ProxySettings:Enabled"] = proxyEnabled.ToString()
+            };
             
-            // 无论认证是否启用，都保存用户名和密码，以便用户下次启用时不需要重新输入
+            // 无论代理是否启用，都保存代理地址和端口，以便用户下次启用时不需要重新输入
+            if (!string.IsNullOrWhiteSpace(ProxyAddressBox.Text))
+            {
+                settings["VoiceInput:ProxySettings:Address"] = ProxyAddressBox.Text.Trim();
+            }
+            
+            if (!double.IsNaN(ProxyPortBox.Value) && ProxyPortBox.Value > 0 && ProxyPortBox.Value <= 65535)
+            {
+                settings["VoiceInput:ProxySettings:Port"] = ((int)ProxyPortBox.Value).ToString();
+            }
+            
+            // 保存认证设置
+            settings["VoiceInput:ProxySettings:RequiresAuthentication"] = (ProxyAuthCheckBox.IsChecked ?? false).ToString();
+            
+            // 批量保存配置
+            _configManager.SaveSettingsBatch(settings);
+            
+            // 单独保存用户名和密码到凭据管理器
             if (!string.IsNullOrWhiteSpace(ProxyUsernameBox.Text) || !string.IsNullOrWhiteSpace(ProxyPasswordBox.Password))
             {
                 _configManager.ProxyUsername = ProxyUsernameBox.Text;

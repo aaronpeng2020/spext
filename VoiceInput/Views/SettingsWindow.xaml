@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
-        Title="语音输入法设置" Height="700" Width="900"
+        Title="Spext 设置" Height="700" Width="900"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Style="{StaticResource ModernWindowStyle}"
@@ -22,7 +22,7 @@
         
         <!-- Header -->
         <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" Height="60">
-            <TextBlock Text="VoiceInput 设置" 
+            <TextBlock Text="Spext 设置" 
                       VerticalAlignment="Center" 
                       HorizontalAlignment="Left"
                       Margin="24,0"

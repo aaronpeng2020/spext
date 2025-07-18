@@ -1,6 +1,8 @@
 using System;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using ModernWpf.Controls;
+using VoiceInput.Core;
 using VoiceInput.Services;
 using VoiceInput.Views.Pages;
 
@@ -60,11 +62,35 @@ namespace VoiceInput.Views
         {
             try
             {
+                // 保存热键之前的值
+                var oldHotkey = _configManager.Hotkey;
+                
                 // 保存所有页面的设置
                 _basicPage.SaveSettings();
                 _apiPage.SaveSettings();
                 _proxyPage.SaveSettings();
                 _uiPage.SaveSettings();
+                
+                // 如果热键有变化，更新全局热键服务
+                var newHotkey = _configManager.Hotkey;
+                if (oldHotkey != newHotkey)
+                {
+                    try
+                    {
+                        var serviceProvider = (Application.Current as App)?.GetServiceProvider();
+                        if (serviceProvider != null)
+                        {
+                            var controller = serviceProvider.GetRequiredService<VoiceInputController>();
+                            controller.UpdateHotkey(newHotkey);
+                            LoggerService.Log($"热键已更新: {oldHotkey} -> {newHotkey}");
+                        }
+                    }
+                    catch (Exception hotkeyEx)
+                    {
+                        MessageBox.Show($"更新热键失败: {hotkeyEx.Message}\n\n热键将在下次启动时生效。", 
+                            "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
 
                 MessageBox.Show("设置已保存", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                 DialogResult = true;

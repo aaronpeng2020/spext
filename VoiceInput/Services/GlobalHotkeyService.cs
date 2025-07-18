@@ -135,6 +135,74 @@ namespace VoiceInput.Services
             return CallNextHookEx(_hookId, nCode, wParam, lParam);
         }
 
+        public void UpdateHotkey(string newHotkey)
+        {
+            try
+            {
+                // 先解除旧的钩子
+                if (_hookId != IntPtr.Zero)
+                {
+                    UnhookWindowsHookEx(_hookId);
+                    _hookId = IntPtr.Zero;
+                }
+                
+                // 解析新的快捷键
+                Keys newKey;
+                if (TryParseHotkey(newHotkey, out newKey))
+                {
+                    _hotkeyCode = newKey;
+                    LoggerService.Log($"更新快捷键为: {newHotkey}");
+                    
+                    // 重新注册钩子
+                    Initialize();
+                }
+                else
+                {
+                    LoggerService.Log($"无效的快捷键: {newHotkey}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"更新快捷键失败: {ex.Message}");
+            }
+        }
+        
+        private bool TryParseHotkey(string hotkey, out Keys key)
+        {
+            key = Keys.None;
+            
+            try
+            {
+                // 处理单键（如 F3）
+                if (!hotkey.Contains("+"))
+                {
+                    if (Enum.TryParse<Keys>(hotkey, out key))
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // 处理组合键（如 Ctrl+F3）
+                    var parts = hotkey.Split('+');
+                    var mainKey = parts[parts.Length - 1];
+                    
+                    // 暂时只支持单键
+                    if (Enum.TryParse<Keys>(mainKey, out key))
+                    {
+                        LoggerService.Log($"组合键暂不支持，使用主键: {mainKey}");
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"解析快捷键失败: {ex.Message}");
+            }
+            
+            return false;
+        }
+
         public void Dispose()
         {
             if (_hookId != IntPtr.Zero)

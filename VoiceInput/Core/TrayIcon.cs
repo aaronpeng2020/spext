@@ -42,7 +42,7 @@ namespace VoiceInput.Core
                 {
                     Icon = _normalIcon ?? SystemIcons.Application,
                     Visible = true,
-                    Text = "语音输入法 - 按住 F3 录音"
+                    Text = "Spext - 按住 F3 录音"
                 };
 
                 // 双击托盘图标打开设置
@@ -67,7 +67,7 @@ namespace VoiceInput.Core
                 _audioRecorder.RecordingStateChanged += OnRecordingStateChanged;
                 
                 // 显示启动提示
-                ShowBalloonTip("语音输入法", "已启动，按住 F3 开始录音", ToolTipIcon.Info);
+                ShowBalloonTip("Spext", "已启动，按住 F3 开始录音", ToolTipIcon.Info);
             });
         }
 
@@ -76,7 +76,7 @@ namespace VoiceInput.Core
             if (_notifyIcon != null)
             {
                 _notifyIcon.Icon = isRecording ? (_recordingIcon ?? SystemIcons.Information) : (_normalIcon ?? SystemIcons.Application);
-                _notifyIcon.Text = isRecording ? "语音输入法 - 录音中..." : "语音输入法 - 按住 F3 录音";
+                _notifyIcon.Text = isRecording ? "Spext - 录音中..." : "Spext - 按住 F3 录音";
             }
         }
 
@@ -100,24 +100,52 @@ namespace VoiceInput.Core
         {
             try
             {
-                // 尝试从嵌入资源加载图标
-                var assembly = Assembly.GetExecutingAssembly();
-                var iconResourceName = "VoiceInput.Resources.Icons.VoiceInput.ico";
+                // 首先尝试从文件系统加载
+                LoadIconFromFile();
                 
-                using (var stream = assembly.GetManifestResourceStream(iconResourceName))
+                // 如果文件系统加载失败，使用默认图标
+                if (_normalIcon == null || _recordingIcon == null)
                 {
-                    if (stream != null)
-                    {
-                        _normalIcon = new Icon(stream);
-                        // 录音时使用相同图标，可以考虑创建不同的图标
-                        _recordingIcon = new Icon(stream);
-                    }
+                    LoggerService.Log("使用系统默认图标");
+                    _normalIcon = SystemIcons.Application;
+                    _recordingIcon = SystemIcons.Information;
                 }
             }
             catch (Exception ex)
             {
                 LoggerService.Log($"加载图标失败: {ex.Message}");
                 // 如果加载失败，使用系统默认图标
+                _normalIcon = SystemIcons.Application;
+                _recordingIcon = SystemIcons.Information;
+            }
+        }
+        
+        private void LoadIconFromFile()
+        {
+            try
+            {
+                // 尝试从文件系统加载图标
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Icons", "microphone.png");
+                if (File.Exists(iconPath))
+                {
+                    using (var bitmap = new System.Drawing.Bitmap(iconPath))
+                    {
+                        IntPtr hIcon = bitmap.GetHicon();
+                        _normalIcon = Icon.FromHandle(hIcon);
+                        _recordingIcon = Icon.FromHandle(hIcon);
+                    }
+                    LoggerService.Log("从文件系统加载图标成功");
+                }
+                else
+                {
+                    LoggerService.Log($"图标文件不存在: {iconPath}");
+                    _normalIcon = SystemIcons.Application;
+                    _recordingIcon = SystemIcons.Information;
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"从文件加载图标失败: {ex.Message}");
                 _normalIcon = SystemIcons.Application;
                 _recordingIcon = SystemIcons.Information;
             }
