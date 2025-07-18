@@ -12,6 +12,7 @@ namespace VoiceInput.Views.Pages
     public partial class BasicSettingsPage : Page
     {
         private readonly ConfigManager _configManager;
+        private string _tempApiKey; // 临时保存API密钥，防止页面切换时丢失
 
         public BasicSettingsPage(ConfigManager configManager)
         {
@@ -19,6 +20,25 @@ namespace VoiceInput.Views.Pages
             _configManager = configManager;
             LoadSettings();
             InitializeHotkeyInput();
+            
+            // 监听密码框变化，保存到临时变量
+            ApiKeyBox.PasswordChanged += (s, e) => 
+            {
+                _tempApiKey = ApiKeyBox.Password;
+            };
+            
+            // 监听页面加载事件，恢复密码
+            Loaded += (s, e) => 
+            {
+                if (!string.IsNullOrEmpty(_tempApiKey))
+                {
+                    ApiKeyBox.Password = _tempApiKey;
+                }
+                else if (!string.IsNullOrEmpty(_configManager.ApiKey))
+                {
+                    ApiKeyBox.Password = _configManager.ApiKey;
+                }
+            };
         }
         
         private void InitializeHotkeyInput()
@@ -123,6 +143,7 @@ namespace VoiceInput.Views.Pages
             if (!string.IsNullOrEmpty(_configManager.ApiKey))
             {
                 ApiKeyBox.Password = _configManager.ApiKey;
+                _tempApiKey = _configManager.ApiKey; // 同时保存到临时变量
             }
 
             // 加载快捷键
