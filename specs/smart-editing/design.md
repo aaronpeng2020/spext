@@ -9,8 +9,9 @@
 ```mermaid
 graph TD
     A[用户按下热键] --> B[AudioRecorderService 录音]
-    B --> C[SpeechRecognitionService 语音识别]
-    C --> D{文本长度判断}
+    B --> C[SpeechRecognitionService 语音识别<br/>+ Whisper优化参数]
+    C --> K[TextNormalizationService<br/>快速修正]
+    K --> D{文本长度判断}
     D -->|短文本| E[TextInputService 直接输入]
     D -->|长文本| F[TextProcessingService 智能处理]
     F --> G[OpenAI Chat API]
@@ -18,6 +19,7 @@ graph TD
     H --> E
     I[InputHistoryService] --> F
     J[ConfigManager] --> F
+    J --> C
 ```
 
 ## 技术栈
@@ -94,8 +96,36 @@ public interface IInputHistoryService
       "ChatModel": "gpt-3.5-turbo",
       "ChatApiUrl": "https://api.openai.com/v1/chat/completions",
       "ProcessingTimeout": 5
+    },
+    "WhisperAdvanced": {
+      "Language": "zh-CN",
+      "Prompt": "使用简体中文记录。支持中英文混合输入。",
+      "Temperature": 0.0
+    },
+    "TextNormalization": {
+      "ForceSimplifiedChinese": true,
+      "AutoFixCommonErrors": true
     }
   }
+}
+```
+
+### 5. TextNormalizationService（新增）
+
+处理语音识别结果的快速修正，特别是繁简体转换和常见误识别。
+
+**主要职责**：
+- 繁体字到简体字的快速转换
+- 常见误识别模式的修正
+- 轻量级的文本规范化
+
+**关键方法**：
+```csharp
+public interface ITextNormalizationService
+{
+    string NormalizeToSimplified(string text);
+    bool ContainsTraditional(string text);
+    string ApplyQuickFixes(string text);
 }
 ```
 
@@ -139,6 +169,16 @@ public interface IInputHistoryService
 3. **专业纠正**：
    ```
    修正以下文本中的专业术语拼写和语法错误，确保技术术语的准确性。只返回修正后的文本。
+   ```
+
+4. **增强中文处理**（新增）：
+   ```
+   请对以下文本进行处理：
+   1. 将所有繁体字转换为简体字（重要：用户说的是简体中文）
+   2. 识别并修正货币相关的误识别（如'到'可能是'dollar'）
+   3. 根据语义添加合适的标点符号
+   4. 处理中英文混合的专业术语
+   只返回处理后的文本。
    ```
 
 ## 数据流设计

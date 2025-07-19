@@ -72,8 +72,8 @@ namespace VoiceInput.Views
                 {
                     VerticalAlignment = VerticalAlignment.Bottom,
                     Margin = new Thickness(0.5, 0, 0.5, 0), // 水平间距
-                    RadiusX = 0,
-                    RadiusY = 0,
+                    RadiusX = 1,
+                    RadiusY = 1,
                     Height = 0,
                     Fill = new SolidColorBrush(Color.FromRgb(220, 220, 220)), // 浅灰色
                     Width = 2 // 更窄的宽度

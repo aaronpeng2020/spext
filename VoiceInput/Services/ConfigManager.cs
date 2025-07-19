@@ -72,6 +72,17 @@ namespace VoiceInput.Services
         
         public string WhisperBaseUrl => _configuration["VoiceInput:WhisperAPI:BaseUrl"] ?? "https://api.openai.com/v1/audio/transcriptions";
         
+        // GPT API 配置
+        public string GPTModel => _configuration["VoiceInput:GPTAPI:Model"] ?? "gpt-4o-mini";
+        
+        public string GPTBaseUrl => _configuration["VoiceInput:GPTAPI:BaseUrl"] ?? "https://api.openai.com/v1/chat/completions";
+        
+        public int GPTTimeout => int.TryParse(_configuration["VoiceInput:GPTAPI:Timeout"], out var timeout) ? timeout : 30;
+        
+        public double GPTTemperature => double.TryParse(_configuration["VoiceInput:GPTAPI:Temperature"], out var temp) ? temp : 0.0;
+        
+        public int GPTMaxTokens => int.TryParse(_configuration["VoiceInput:GPTAPI:MaxTokens"], out var tokens) ? tokens : 1000;
+        
         public int WhisperTimeout => int.TryParse(_configuration["VoiceInput:WhisperAPI:Timeout"], out var timeout) ? timeout : 30;
         
         public string WhisperLanguage => _configuration["VoiceInput:WhisperAPI:Language"] ?? "auto";

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModernWpf;
 using VoiceInput.Core;
 using VoiceInput.Services;
+using VoiceInput.Models;
 
 namespace VoiceInput
 {
@@ -53,9 +54,9 @@ namespace VoiceInput
             _trayIcon = _serviceProvider.GetRequiredService<TrayIcon>();
             _trayIcon.Initialize();
 
-            // 初始化控制器
-            var controller = _serviceProvider.GetRequiredService<VoiceInputController>();
-            controller.Initialize();
+            // 初始化控制器（使用增强版）
+            var controller = _serviceProvider.GetRequiredService<EnhancedVoiceInputController>();
+            controller.InitializeAsync().GetAwaiter().GetResult();
 
             LoggerService.Log("Spext 启动成功！");
 
@@ -72,16 +73,31 @@ namespace VoiceInput
             
             services.AddSingleton<IConfiguration>(configuration);
             
-            // 注册服务
+            // 注册日志服务
+            services.AddSingleton<ILoggerService, LoggerServiceWrapper>();
+            
+            // 注册基础服务
             services.AddSingleton<SecureStorageService>();
             services.AddSingleton<AutoStartService>();
             services.AddSingleton<TrayIcon>();
-            services.AddSingleton<GlobalHotkeyService>();
             services.AddSingleton<AudioRecorderService>();
             services.AddSingleton<AudioMuteService>();
-            services.AddSingleton<SpeechRecognitionService>();
             services.AddSingleton<TextInputService>();
             services.AddSingleton<ConfigManager>();
+            
+            // 注册新的增强服务
+            services.AddSingleton<IProfileConfigurationService, ProfileConfigurationService>();
+            services.AddSingleton<IHotkeyProfileService, HotkeyProfileService>();
+            services.AddSingleton<ICustomPromptService, CustomPromptService>();
+            services.AddSingleton<IEnhancedSpeechRecognitionService, EnhancedSpeechRecognitionService>();
+            services.AddSingleton<IEnhancedGlobalHotkeyService, EnhancedGlobalHotkeyService>();
+            
+            // 注册控制器（使用增强版）
+            services.AddSingleton<EnhancedVoiceInputController>();
+            
+            // 保留旧服务以便兼容
+            services.AddSingleton<GlobalHotkeyService>();
+            services.AddSingleton<SpeechRecognitionService>();
             services.AddSingleton<VoiceInputController>();
         }
 

@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.modernwpf.com/2019"
         mc:Ignorable="d"
-        Title="Spext 设置" Height="700" Width="900"
+        Title="Spext 设置" Height="800" Width="1200"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
+        MinHeight="600" MinWidth="1000"
         Style="{StaticResource ModernWindowStyle}"
         ui:WindowHelper.UseModernWindowStyle="True">
     
@@ -53,9 +54,9 @@
                             </ui:NavigationViewItem.Icon>
                         </ui:NavigationViewItem>
                         
-                        <ui:NavigationViewItem Content="API 设置" Tag="API">
+                        <ui:NavigationViewItem Content="转写与翻译" Tag="TranscriptionTranslation">
                             <ui:NavigationViewItem.Icon>
-                                <ui:SymbolIcon Symbol="World"/>
+                                <ui:SymbolIcon Symbol="Switch"/>
                             </ui:NavigationViewItem.Icon>
                         </ui:NavigationViewItem>
                         
@@ -68,6 +69,12 @@
                         <ui:NavigationViewItem Content="界面设置" Tag="UI">
                             <ui:NavigationViewItem.Icon>
                                 <ui:SymbolIcon Symbol="View"/>
+                            </ui:NavigationViewItem.Icon>
+                        </ui:NavigationViewItem>
+                        
+                        <ui:NavigationViewItem Content="快捷键配置" Tag="HotkeyProfiles">
+                            <ui:NavigationViewItem.Icon>
+                                <ui:SymbolIcon Symbol="Keyboard"/>
                             </ui:NavigationViewItem.Icon>
                         </ui:NavigationViewItem>
                     </ui:NavigationView.MenuItems>

@@ -24,30 +24,51 @@
   - 添加清除历史功能
   - _需求: 需求3_
 
+- [ ] 5. 创建 ITextNormalizationService 接口
+  - 定义文本规范化相关的接口方法
+  - 包含繁简转换和快速修正方法
+  - _需求: 语音识别优化_
+
+- [ ] 6. 实现 TextNormalizationService 服务
+  - 实现繁体到简体的快速转换
+  - 实现常见误识别的修正规则
+  - 集成到语音识别流程
+  - _需求: 语音识别优化_
+
 ## 第二阶段：配置管理扩展
 
-- [ ] 5. 扩展 appsettings.json 配置文件
+- [ ] 7. 扩展 appsettings.json 配置文件
   - 添加 SmartEditing 配置节
+  - 添加 WhisperAdvanced 配置节
+  - 添加 TextNormalization 配置节
   - 定义所有智能编辑相关配置项
-  - _需求: 需求4, 需求5_
+  - _需求: 需求4, 需求5, 语音识别优化_
 
-- [ ] 6. 扩展 ConfigManager 类
+- [ ] 8. 扩展 ConfigManager 类
   - 添加智能编辑相关的配置属性
+  - 添加语音识别优化相关的配置属性
   - 实现配置的读取和保存逻辑
-  - _需求: 需求4, 需求5_
+  - _需求: 需求4, 需求5, 语音识别优化_
 
 ## 第三阶段：核心流程集成
 
-- [ ] 7. 修改 VoiceInputController
+- [ ] 9. 修改 SpeechRecognitionService
+  - 添加 Whisper API 优化参数（prompt、temperature）
+  - 将语言参数从 "zh" 改为 "zh-CN"
+  - _需求: 语音识别优化_
+
+- [ ] 10. 修改 VoiceInputController
   - 注入新增的服务依赖
+  - 在语音识别后先进行快速修正
   - 在语音识别完成后集成文本处理逻辑
   - 实现历史记录的保存
-  - _需求: 需求1, 需求3, 需求6_
+  - _需求: 需求1, 需求3, 需求6, 语音识别优化_
 
-- [ ] 8. 更新服务注册
+- [ ] 11. 更新服务注册
   - 在 App.xaml.cs 中注册新增的服务
+  - 注册 TextNormalizationService
   - 配置依赖注入
-  - _需求: 需求1, 需求3_
+  - _需求: 需求1, 需求3, 语音识别优化_
 
 ## 第四阶段：用户界面实现
 

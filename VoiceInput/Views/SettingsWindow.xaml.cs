@@ -12,9 +12,10 @@ namespace VoiceInput.Views
     {
         private readonly ConfigManager _configManager;
         private BasicSettingsPage _basicPage;
-        private ApiSettingsPage _apiPage;
+        private TranscriptionTranslationPage _transcriptionTranslationPage;
         private ProxySettingsPage _proxyPage;
         private UiSettingsPage _uiPage;
+        private HotkeyProfilesPage _hotkeyProfilesPage;
 
         public SettingsWindow(ConfigManager configManager)
         {
@@ -31,9 +32,10 @@ namespace VoiceInput.Views
         {
             // 创建页面实例并传递配置管理器
             _basicPage = new BasicSettingsPage(_configManager);
-            _apiPage = new ApiSettingsPage(_configManager);
+            _transcriptionTranslationPage = new TranscriptionTranslationPage();
             _proxyPage = new ProxySettingsPage(_configManager);
             _uiPage = new UiSettingsPage(_configManager);
+            _hotkeyProfilesPage = new HotkeyProfilesPage();
         }
 
         private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -45,14 +47,17 @@ namespace VoiceInput.Views
                     case "Basic":
                         ContentFrame.Navigate(_basicPage);
                         break;
-                    case "API":
-                        ContentFrame.Navigate(_apiPage);
+                    case "TranscriptionTranslation":
+                        ContentFrame.Navigate(_transcriptionTranslationPage);
                         break;
                     case "Proxy":
                         ContentFrame.Navigate(_proxyPage);
                         break;
                     case "UI":
                         ContentFrame.Navigate(_uiPage);
+                        break;
+                    case "HotkeyProfiles":
+                        ContentFrame.Navigate(_hotkeyProfilesPage);
                         break;
                 }
             }
@@ -67,7 +72,7 @@ namespace VoiceInput.Views
                 
                 // 保存所有页面的设置
                 _basicPage.SaveSettings();
-                _apiPage.SaveSettings();
+                _transcriptionTranslationPage.SaveSettings();
                 _proxyPage.SaveSettings();
                 _uiPage.SaveSettings();
                 

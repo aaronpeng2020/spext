@@ -16,6 +16,7 @@ namespace VoiceInput.Core
         private readonly ConfigManager _configManager;
         private readonly SpectrumWindow _spectrumWindow;
         private bool _isProcessing;
+        private IntPtr _targetWindow;
 
         public VoiceInputController(
             GlobalHotkeyService hotkeyService,
@@ -63,6 +64,10 @@ namespace VoiceInput.Core
                 if (isPressed)
                 {
                     LoggerService.Log("F3 按下 - 开始录音");
+                    
+                    // 记录当前焦点窗口
+                    _targetWindow = _textInput.GetCurrentFocusWindow();
+                    LoggerService.Log($"记录焦点窗口句柄: {_targetWindow}");
                     
                     // 如果启用了静音功能，则静音系统音频
                     if (_configManager.MuteWhileRecording)
@@ -127,7 +132,7 @@ namespace VoiceInput.Core
                 if (!string.IsNullOrEmpty(text))
                 {
                     LoggerService.Log($"识别成功: {text}");
-                    _textInput.TypeText(text);
+                    _textInput.TypeText(text, _targetWindow);
                     // 移除识别完成的提示
                     // _trayIcon.ShowBalloonTip("语音输入", "识别完成", System.Windows.Forms.ToolTipIcon.Info);
                 }

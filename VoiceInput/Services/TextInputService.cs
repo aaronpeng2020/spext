@@ -26,6 +26,15 @@ namespace VoiceInput.Services
         [DllImport("user32.dll", SetLastError = true)]
         private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool IsWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetFocus();
+
         [StructLayout(LayoutKind.Sequential)]
         private struct INPUT
         {
@@ -82,14 +91,54 @@ namespace VoiceInput.Services
             _inputSimulator = new InputSimulator();
         }
 
+        /// <summary>
+        /// 获取当前焦点窗口句柄
+        /// </summary>
+        public IntPtr GetCurrentFocusWindow()
+        {
+            var window = GetForegroundWindow();
+            var title = GetWindowTitle(window);
+            var className = GetWindowClassName(window);
+            LoggerService.Log($"GetCurrentFocusWindow - 句柄: {window}, 标题: {title}, 类名: {className}");
+            return window;
+        }
+
+        /// <summary>
+        /// 获取当前输入焦点控件句柄
+        /// </summary>
+        public IntPtr GetCurrentFocusControl()
+        {
+            return GetFocus();
+        }
+
         public void TypeText(string text)
+        {
+            TypeText(text, IntPtr.Zero);
+        }
+
+        /// <summary>
+        /// 向指定窗口输入文字
+        /// </summary>
+        /// <param name="text">要输入的文字</param>
+        /// <param name="targetWindow">目标窗口句柄，如果为IntPtr.Zero则使用当前焦点窗口</param>
+        public void TypeText(string text, IntPtr targetWindow)
         {
             if (string.IsNullOrEmpty(text)) return;
 
             LoggerService.Log($"准备输入文字: {text}");
 
-            // 获取当前焦点窗口
-            var foregroundWindow = GetForegroundWindow();
+            // 如果指定了目标窗口，先验证窗口是否有效
+            if (targetWindow != IntPtr.Zero)
+            {
+                if (!IsWindow(targetWindow))
+                {
+                    LoggerService.Log("目标窗口已关闭，使用当前焦点窗口");
+                    targetWindow = IntPtr.Zero;
+                }
+            }
+
+            // 获取窗口句柄
+            var foregroundWindow = targetWindow != IntPtr.Zero ? targetWindow : GetForegroundWindow();
             
             if (foregroundWindow == IntPtr.Zero)
             {
@@ -98,9 +147,22 @@ namespace VoiceInput.Services
                 return;
             }
 
+            // 如果指定了目标窗口且与当前窗口不同，需要先激活目标窗口
+            var currentWindow = GetForegroundWindow();
+            bool needRestoreWindow = false;
+            if (targetWindow != IntPtr.Zero && targetWindow != currentWindow)
+            {
+                LoggerService.Log($"切换到目标窗口");
+                SetForegroundWindow(targetWindow);
+                needRestoreWindow = true;
+                // 给窗口一点时间来处理焦点切换
+                System.Threading.Thread.Sleep(50);
+            }
+
             // 获取窗口类名和窗口标题，用于判断应用类型
             var className = GetWindowClassName(foregroundWindow);
-            var windowTitle = GetActiveWindowTitle();
+            // 获取目标窗口的标题，而不是当前活动窗口
+            var windowTitle = GetWindowTitle(foregroundWindow);
             LoggerService.Log($"目标窗口 - 类名: {className}, 标题: {windowTitle}");
 
             // 根据不同的应用选择输入策略
@@ -158,6 +220,12 @@ namespace VoiceInput.Services
                     UseClipboardInput(text);
                 }
             }
+
+            // 如果切换过窗口，恢复原窗口
+            if (needRestoreWindow && currentWindow != IntPtr.Zero)
+            {
+                SetForegroundWindow(currentWindow);
+            }
         }
 
         private void UseClipboardInput(string text)
@@ -193,14 +261,45 @@ namespace VoiceInput.Services
                 LoggerService.Log($"备份剪贴板内容失败: {backupEx.Message}");
             }
 
+            // 使用重试机制设置剪贴板内容
+            const int maxRetries = 3;
+            const int retryDelay = 100;
+            Exception? lastException = null;
+            bool clipboardSetSuccess = false;
+
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        System.Windows.Clipboard.SetText(text);
+                    });
+                    
+                    clipboardSetSuccess = true;
+                    LoggerService.Log($"剪贴板设置成功（尝试 {i + 1}/{maxRetries}）");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    LoggerService.Log($"设置剪贴板失败（尝试 {i + 1}/{maxRetries}）: {ex.Message}");
+                    
+                    if (i < maxRetries - 1)
+                    {
+                        System.Threading.Thread.Sleep(retryDelay);
+                    }
+                }
+            }
+
+            if (!clipboardSetSuccess)
+            {
+                LoggerService.Log($"设置剪贴板最终失败: {lastException?.Message}");
+                throw new Exception("无法设置剪贴板内容，请检查是否有其他程序占用剪贴板", lastException);
+            }
+
             try
             {
-                // 设置新内容并粘贴
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    System.Windows.Clipboard.SetText(text);
-                });
-                
                 // 稍微延迟以确保剪贴板内容已设置
                 System.Threading.Thread.Sleep(50);
                 
@@ -217,28 +316,37 @@ namespace VoiceInput.Services
                 // 恢复原剪贴板内容
                 if (hasOriginalContent && originalClipboardContent != null)
                 {
-                    try
+                    // 使用重试机制恢复剪贴板内容
+                    for (int i = 0; i < maxRetries; i++)
                     {
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        try
                         {
-                            if (originalClipboardContent is string textContent)
+                            System.Windows.Application.Current.Dispatcher.Invoke(() =>
                             {
-                                System.Windows.Clipboard.SetText(textContent);
-                            }
-                            else if (originalClipboardContent is System.Windows.Media.Imaging.BitmapSource imageContent)
+                                if (originalClipboardContent is string textContent)
+                                {
+                                    System.Windows.Clipboard.SetText(textContent);
+                                }
+                                else if (originalClipboardContent is System.Windows.Media.Imaging.BitmapSource imageContent)
+                                {
+                                    System.Windows.Clipboard.SetImage(imageContent);
+                                }
+                                else if (originalClipboardContent is System.Collections.Specialized.StringCollection fileList)
+                                {
+                                    System.Windows.Clipboard.SetFileDropList(fileList);
+                                }
+                            });
+                            LoggerService.Log($"已恢复原剪贴板内容（尝试 {i + 1}/{maxRetries}）");
+                            break;
+                        }
+                        catch (Exception restoreEx)
+                        {
+                            LoggerService.Log($"恢复剪贴板内容失败（尝试 {i + 1}/{maxRetries}）: {restoreEx.Message}");
+                            if (i < maxRetries - 1)
                             {
-                                System.Windows.Clipboard.SetImage(imageContent);
+                                System.Threading.Thread.Sleep(retryDelay);
                             }
-                            else if (originalClipboardContent is System.Collections.Specialized.StringCollection fileList)
-                            {
-                                System.Windows.Clipboard.SetFileDropList(fileList);
-                            }
-                        });
-                        LoggerService.Log("已恢复原剪贴板内容");
-                    }
-                    catch (Exception restoreEx)
-                    {
-                        LoggerService.Log($"恢复剪贴板内容失败: {restoreEx.Message}");
+                        }
                     }
                 }
             }
@@ -320,6 +428,19 @@ namespace VoiceInput.Services
             var handle = GetForegroundWindow();
 
             if (GetWindowText(handle, buff, nChars) > 0)
+            {
+                return buff.ToString();
+            }
+
+            return string.Empty;
+        }
+
+        private string GetWindowTitle(IntPtr hWnd)
+        {
+            const int nChars = 256;
+            var buff = new StringBuilder(nChars);
+
+            if (GetWindowText(hWnd, buff, nChars) > 0)
             {
                 return buff.ToString();
             }

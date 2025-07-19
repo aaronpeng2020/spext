@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Extensions.DependencyInjection;
 using VoiceInput.Services;
 
 namespace VoiceInput.Views.Pages
@@ -12,143 +13,23 @@ namespace VoiceInput.Views.Pages
     public partial class BasicSettingsPage : Page
     {
         private readonly ConfigManager _configManager;
-        private string _tempApiKey; // 临时保存API密钥，防止页面切换时丢失
+        private readonly SecureStorageService _secureStorage;
 
         public BasicSettingsPage(ConfigManager configManager)
         {
             InitializeComponent();
             _configManager = configManager;
+            
+            // 获取 SecureStorageService
+            var app = Application.Current as App;
+            var serviceProvider = app?.GetServiceProvider();
+            _secureStorage = serviceProvider?.GetService<SecureStorageService>();
+            
             LoadSettings();
-            InitializeHotkeyInput();
-            
-            // 监听密码框变化，保存到临时变量
-            ApiKeyBox.PasswordChanged += (s, e) => 
-            {
-                _tempApiKey = ApiKeyBox.Password;
-            };
-            
-            // 监听页面加载事件，恢复密码
-            Loaded += (s, e) => 
-            {
-                if (!string.IsNullOrEmpty(_tempApiKey))
-                {
-                    ApiKeyBox.Password = _tempApiKey;
-                }
-                else if (!string.IsNullOrEmpty(_configManager.ApiKey))
-                {
-                    ApiKeyBox.Password = _configManager.ApiKey;
-                }
-            };
-        }
-        
-        private void InitializeHotkeyInput()
-        {
-            // 添加事件处理
-            HotkeyBox.PreviewKeyDown += HotkeyBox_PreviewKeyDown;
-            HotkeyBox.GotFocus += HotkeyBox_GotFocus;
-            HotkeyBox.LostFocus += HotkeyBox_LostFocus;
-            HotkeyBox.MouseDown += HotkeyBox_MouseDown;
-        }
-        
-        private void HotkeyBox_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            // 点击时自动获取焦点
-            HotkeyBox.Focus();
-            e.Handled = true;
-        }
-        
-        private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            e.Handled = true;
-            
-            // 过滤一些特殊键
-            if (e.Key == Key.Escape)
-            {
-                // Esc取消修改
-                HotkeyBox.Text = _configManager.Hotkey;
-                Keyboard.ClearFocus();
-                return;
-            }
-            
-            if (e.Key == Key.Tab || e.Key == Key.LeftShift || e.Key == Key.RightShift ||
-                e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || 
-                e.Key == Key.LeftAlt || e.Key == Key.RightAlt ||
-                e.Key == Key.LWin || e.Key == Key.RWin)
-            {
-                return;
-            }
-            
-            // 构建快捷键字符串
-            string hotkeyString = "";
-            
-            // 检查修饰键
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
-                hotkeyString += "Ctrl+";
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
-                hotkeyString += "Alt+";
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
-                hotkeyString += "Shift+";
-            
-            // 添加主键
-            string keyName = e.Key.ToString();
-            
-            // 处理功能键
-            if (e.Key >= Key.F1 && e.Key <= Key.F12)
-            {
-                hotkeyString += keyName;
-            }
-            else if (e.Key >= Key.D0 && e.Key <= Key.D9)
-            {
-                // 数字键
-                hotkeyString += keyName.Substring(1);
-            }
-            else if (e.Key >= Key.A && e.Key <= Key.Z)
-            {
-                // 字母键
-                hotkeyString += keyName;
-            }
-            else
-            {
-                // 其他键
-                hotkeyString += keyName;
-            }
-            
-            // 更新显示的快捷键
-            HotkeyBox.Text = hotkeyString;
-        }
-        
-        private void HotkeyBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            // 获得焦点时的视觉反馈
-            HotkeyBox.Background = new SolidColorBrush(Color.FromArgb(20, 0, 120, 215));
-            HotkeyBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 120, 215));
-        }
-        
-        private void HotkeyBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            // 失去焦点时恢复原样
-            HotkeyBox.ClearValue(TextBox.BackgroundProperty);
-            HotkeyBox.ClearValue(TextBox.BorderBrushProperty);
-            
-            // 如果没有有效输入，恢复原值
-            if (string.IsNullOrEmpty(HotkeyBox.Text))
-            {
-                HotkeyBox.Text = _configManager.Hotkey;
-            }
         }
 
         private void LoadSettings()
         {
-            // 加载 API 密钥
-            if (!string.IsNullOrEmpty(_configManager.ApiKey))
-            {
-                ApiKeyBox.Password = _configManager.ApiKey;
-                _tempApiKey = _configManager.ApiKey; // 同时保存到临时变量
-            }
-
-            // 加载快捷键
-            HotkeyBox.Text = _configManager.Hotkey;
-
             // 加载自动启动设置
             AutoStartCheckBox.IsChecked = _configManager.AutoStart;
 
@@ -158,17 +39,9 @@ namespace VoiceInput.Views.Pages
 
         public void SaveSettings()
         {
-            // 保存 API 密钥（这个需要单独保存到凭据管理器）
-            // 重要：只有在用户明确输入了新密钥时才更新，避免因为PasswordBox清空而删除已保存的密钥
-            if (!string.IsNullOrEmpty(ApiKeyBox.Password))
-            {
-                _configManager.ApiKey = ApiKeyBox.Password;
-            }
-
             // 批量保存其他设置，避免多次配置重载
             var settings = new System.Collections.Generic.Dictionary<string, string>
             {
-                ["VoiceInput:Hotkey"] = HotkeyBox.Text,
                 ["VoiceInput:AutoStart"] = (AutoStartCheckBox.IsChecked ?? false).ToString(),
                 ["VoiceInput:MuteWhileRecording"] = (MuteWhileRecordingCheckBox.IsChecked ?? false).ToString()
             };
@@ -184,12 +57,12 @@ namespace VoiceInput.Views.Pages
 
             try
             {
-                // 保存当前的API密钥（如果用户刚输入的话）
-                var testApiKey = string.IsNullOrEmpty(ApiKeyBox.Password) ? _configManager.ApiKey : ApiKeyBox.Password;
+                // 使用配置的API密钥进行测试，优先使用 Whisper 专用密钥
+                var testApiKey = _secureStorage?.LoadWhisperApiKey() ?? _secureStorage?.LoadApiKey();
                 
                 if (string.IsNullOrEmpty(testApiKey))
                 {
-                    TestResultText.Text = "请先输入API密钥";
+                    TestResultText.Text = "请先在转写与翻译设置中配置API密钥";
                     TestResultText.Foreground = Brushes.Red;
                     return;
                 }
