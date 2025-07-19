@@ -220,6 +220,11 @@ FakesAssemblies/
 *.tar.gz
 *.rar
 
+# 发布文件例外
+!release/Spext-v*.zip
+!release/v*/
+!release/v*/*
+
 # 自定义工具输出
 tools/
 packages/
