@@ -124,24 +124,47 @@ namespace VoiceInput.Core
         {
             try
             {
-                // 尝试从文件系统加载图标
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Icons", "microphone.png");
-                if (File.Exists(iconPath))
+                // 尝试从 Resources 目录加载 ICO 文件
+                var icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "app.ico");
+                if (File.Exists(icoPath))
                 {
-                    using (var bitmap = new System.Drawing.Bitmap(iconPath))
+                    _normalIcon = new Icon(icoPath);
+                    _recordingIcon = new Icon(icoPath); // 可以考虑使用不同的图标
+                    LoggerService.Log($"从 ICO 文件加载图标成功: {icoPath}");
+                    return;
+                }
+                
+                // 如果 ICO 不存在，尝试加载 PNG
+                var pngPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "icon_32.png");
+                if (File.Exists(pngPath))
+                {
+                    using (var bitmap = new System.Drawing.Bitmap(pngPath))
                     {
                         IntPtr hIcon = bitmap.GetHicon();
                         _normalIcon = Icon.FromHandle(hIcon);
                         _recordingIcon = Icon.FromHandle(hIcon);
                     }
-                    LoggerService.Log("从文件系统加载图标成功");
+                    LoggerService.Log($"从 PNG 文件加载图标成功: {pngPath}");
+                    return;
                 }
-                else
+                
+                // 尝试从嵌入的资源加载
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "VoiceInput.Resources.app.ico";
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {
-                    LoggerService.Log($"图标文件不存在: {iconPath}");
-                    _normalIcon = SystemIcons.Application;
-                    _recordingIcon = SystemIcons.Information;
+                    if (stream != null)
+                    {
+                        _normalIcon = new Icon(stream);
+                        _recordingIcon = new Icon(stream);
+                        LoggerService.Log("从嵌入资源加载图标成功");
+                        return;
+                    }
                 }
+                
+                LoggerService.Log("无法找到图标文件，使用默认图标");
+                _normalIcon = SystemIcons.Application;
+                _recordingIcon = SystemIcons.Information;
             }
             catch (Exception ex)
             {

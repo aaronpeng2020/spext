@@ -8,6 +8,7 @@
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,12 +29,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\Icons\*.ico" />
+    <Resource Include="Resources\*.ico" />
+    <Resource Include="Resources\*.png" />
     <Resource Include="Resources\Icons\*.xaml" />
   </ItemGroup>
   
   <ItemGroup>
     <None Update="Resources\Icons\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\*.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\*.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
