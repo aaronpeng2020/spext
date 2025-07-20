@@ -185,6 +185,196 @@
                 </StackPanel>
             </GroupBox>
             
+            <!-- 朗读设置 -->
+            <GroupBox Header="朗读设置 (TTS API)" Margin="0,0,0,20">
+                <StackPanel Margin="10">
+                    <!-- 使用 OpenAI 配置 -->
+                    <CheckBox x:Name="UseOpenAIConfigCheckBox"
+                              Content="使用 OpenAI API 配置"
+                              IsChecked="{Binding TtsSettings.UseOpenAIConfig}"
+                              Margin="0,0,0,10"/>
+                    <TextBlock Text="启用此选项时，将使用与语音转写相同的 API 密钥和代理设置"
+                               FontSize="11"
+                               Foreground="Gray"
+                               Margin="0,0,0,15"/>
+                    
+                    <!-- 自定义 TTS API 设置 -->
+                    <StackPanel IsEnabled="{Binding ElementName=UseOpenAIConfigCheckBox, Path=IsChecked, Converter={StaticResource InverseBooleanConverter}}">
+                        <!-- API 密钥 -->
+                        <Label Content="TTS API 密钥" Margin="0,0,0,5"/>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="TtsApiKeyBox" 
+                                       Grid.Column="0"
+                                       PasswordChar="●"
+                                       ui:ControlHelper.PlaceholderText="输入 TTS API 密钥"/>
+                            <Button Grid.Column="1" 
+                                    Content="显示" 
+                                    Click="ShowTtsApiKey_Click"
+                                    Margin="5,0,0,0"
+                                    Padding="10,5"/>
+                            <Button Grid.Column="2" 
+                                    Content="保存" 
+                                    Click="SaveTtsApiKey_Click"
+                                    Margin="5,0,0,0"
+                                    Padding="10,5"/>
+                        </Grid>
+                        
+                        <!-- API URL -->
+                        <Label Content="TTS API 端点" Margin="0,0,0,5"/>
+                        <TextBox x:Name="TtsApiUrlBox" 
+                               Text="{Binding TtsSettings.CustomApiUrl}"
+                               Margin="0,0,0,5"/>
+                        <TextBlock Text="默认: https://api.openai.com/v1/audio/speech" 
+                                   Foreground="Gray" 
+                                   FontSize="11" 
+                                   Margin="0,0,0,10"/>
+                    </StackPanel>
+                    
+                    <!-- TTS 参数 -->
+                    <Label Content="朗读模型" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="TtsModelComboBox"
+                              SelectedValue="{Binding TtsSettings.Model}"
+                              SelectedValuePath="Tag"
+                              Margin="0,0,0,10">
+                        <ComboBoxItem Content="标准质量 (tts-1)" Tag="tts-1" IsSelected="True"/>
+                        <ComboBoxItem Content="高质量 (tts-1-hd)" Tag="tts-1-hd"/>
+                    </ComboBox>
+                    
+                    <!-- 朗读速度 -->
+                    <Label Content="朗读速度" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider x:Name="TtsSpeedSlider"
+                                Grid.Column="0"
+                                Value="{Binding TtsSettings.Speed}"
+                                Minimum="0.5"
+                                Maximum="2.0"
+                                TickFrequency="0.1"
+                                IsSnapToTickEnabled="True"
+                                Margin="0,0,10,0"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ElementName=TtsSpeedSlider, Path=Value, StringFormat='{}{0:F1}x'}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </Grid>
+                    
+                    <!-- 音量 -->
+                    <Label Content="音量" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider x:Name="TtsVolumeSlider"
+                                Grid.Column="0"
+                                Value="{Binding TtsSettings.Volume}"
+                                Minimum="0"
+                                Maximum="150"
+                                TickFrequency="5"
+                                IsSnapToTickEnabled="True"
+                                Margin="0,0,10,0"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ElementName=TtsVolumeSlider, Path=Value, StringFormat='{}{0}%'}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </Grid>
+                    
+                    <!-- 语音映射提示 -->
+                    <TextBlock Text="语音映射配置：" 
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,10"/>
+                    
+                    <!-- 中文语音 -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="中文" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="ChineseVoiceComboBox"
+                                  SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Alloy (中性)" Tag="alloy"/>
+                            <ComboBoxItem Content="Echo (男声)" Tag="echo"/>
+                            <ComboBoxItem Content="Fable (英式)" Tag="fable"/>
+                            <ComboBoxItem Content="Onyx (低沉)" Tag="onyx"/>
+                            <ComboBoxItem Content="Nova (女声)" Tag="nova" IsSelected="True"/>
+                            <ComboBoxItem Content="Shimmer (柔和)" Tag="shimmer"/>
+                        </ComboBox>
+                    </Grid>
+                    
+                    <!-- 英文语音 -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="英文" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="EnglishVoiceComboBox"
+                                  SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Alloy (中性)" Tag="alloy"/>
+                            <ComboBoxItem Content="Echo (男声)" Tag="echo" IsSelected="True"/>
+                            <ComboBoxItem Content="Fable (英式)" Tag="fable"/>
+                            <ComboBoxItem Content="Onyx (低沉)" Tag="onyx"/>
+                            <ComboBoxItem Content="Nova (女声)" Tag="nova"/>
+                            <ComboBoxItem Content="Shimmer (柔和)" Tag="shimmer"/>
+                        </ComboBox>
+                    </Grid>
+                    
+                    <!-- 日文语音 -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="日文" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="JapaneseVoiceComboBox"
+                                  SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Alloy (中性)" Tag="alloy" IsSelected="True"/>
+                            <ComboBoxItem Content="Echo (男声)" Tag="echo"/>
+                            <ComboBoxItem Content="Fable (英式)" Tag="fable"/>
+                            <ComboBoxItem Content="Onyx (低沉)" Tag="onyx"/>
+                            <ComboBoxItem Content="Nova (女声)" Tag="nova"/>
+                            <ComboBoxItem Content="Shimmer (柔和)" Tag="shimmer"/>
+                        </ComboBox>
+                    </Grid>
+                    
+                    <!-- 默认语音 -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="默认" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="DefaultVoiceComboBox"
+                                  SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Alloy (中性)" Tag="alloy"/>
+                            <ComboBoxItem Content="Echo (男声)" Tag="echo"/>
+                            <ComboBoxItem Content="Fable (英式)" Tag="fable"/>
+                            <ComboBoxItem Content="Onyx (低沉)" Tag="onyx"/>
+                            <ComboBoxItem Content="Nova (女声)" Tag="nova" IsSelected="True"/>
+                            <ComboBoxItem Content="Shimmer (柔和)" Tag="shimmer"/>
+                        </ComboBox>
+                    </Grid>
+                    
+                    <TextBlock Text="根据输出语言自动选择合适的语音"
+                               FontSize="11"
+                               Foreground="Gray"
+                               Margin="0,0,0,10"/>
+                </StackPanel>
+            </GroupBox>
+            
             <!-- 提示信息 -->
             <Border Background="#F0F0F0" 
                     BorderBrush="#D0D0D0" 
@@ -206,6 +396,12 @@
                         <Run Text="   如果选择了目标语言，使用 GPT API 进行翻译"/>
                         <LineBreak/>
                         <LineBreak/>
+                        <Run Text="3. 第三阶段："/>
+                        <Run FontWeight="SemiBold">朗读输出（可选）</Run>
+                        <LineBreak/>
+                        <Run Text="   如果启用了朗读功能，使用 TTS API 朗读翻译后的文本"/>
+                        <LineBreak/>
+                        <LineBreak/>
                         <Run Text="提示："/>
                         <LineBreak/>
                         <Run Text="• 如果只需要转写，在快捷键配置中选择'不翻译'"/>
@@ -213,6 +409,8 @@
                         <Run Text="• Temperature 设为 0 可获得更一致的结果"/>
                         <LineBreak/>
                         <Run Text="• 翻译模型的选择会影响翻译质量和成本"/>
+                        <LineBreak/>
+                        <Run Text="• 朗读功能需要在快捷键配置中单独启用"/>
                     </TextBlock>
                 </StackPanel>
             </Border>

@@ -18,6 +18,7 @@ namespace VoiceInput.Core
         private readonly ConfigManager _configManager;
         private readonly ILoggerService _logger;
         private readonly SpectrumWindow _spectrumWindow;
+        private readonly ITextToSpeechService _ttsService;
         
         private bool _isProcessing;
         private HotkeyProfile _activeProfile;
@@ -33,7 +34,8 @@ namespace VoiceInput.Core
             TrayIcon trayIcon,
             AudioMuteService audioMuteService,
             ConfigManager configManager,
-            ILoggerService logger)
+            ILoggerService logger,
+            ITextToSpeechService ttsService)
         {
             _hotkeyService = hotkeyService;
             _profileService = profileService;
@@ -44,6 +46,7 @@ namespace VoiceInput.Core
             _audioMuteService = audioMuteService;
             _configManager = configManager;
             _logger = logger;
+            _ttsService = ttsService;
             _spectrumWindow = new SpectrumWindow(configManager);
         }
 
@@ -84,6 +87,13 @@ namespace VoiceInput.Core
         {
             // 立即记录时间戳和状态
             var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+            
+            // 当按下任何录音快捷键时，中断当前朗读
+            if (e.IsPressed && _ttsService.IsSpeaking)
+            {
+                _logger.Info($"[{timestamp}] 中断朗读 - 按下了热键 {e.Hotkey}");
+                _ttsService.StopSpeaking();
+            }
             
             if (_isProcessing) 
             {
@@ -228,6 +238,28 @@ namespace VoiceInput.Core
                         var inputLang = LanguageInfo.GetLanguageByCode(_activeProfile.InputLanguage)?.NativeName ?? _activeProfile.InputLanguage;
                         var outputLang = LanguageInfo.GetLanguageByCode(_activeProfile.OutputLanguage)?.NativeName ?? _activeProfile.OutputLanguage;
                         _logger.Info($"翻译完成: {inputLang} → {outputLang}");
+                    }
+                    
+                    // 如果启用了朗读功能，异步朗读文本
+                    if (_activeProfile.EnableReadAloud && _activeProfile.CanEnableReadAloud)
+                    {
+                        // 在异步任务开始前捕获所需的值，避免在异步执行时 _activeProfile 变为 null
+                        var outputLanguage = _activeProfile.OutputLanguage;
+                        var readAloudVoice = _activeProfile.ReadAloudVoice;
+                        var textToSpeak = text;
+                        
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                _logger.Info($"开始朗读文本 (语言: {outputLanguage}, 语音: {readAloudVoice})");
+                                await _ttsService.SpeakAsync(textToSpeak, outputLanguage, readAloudVoice);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Error($"朗读失败: {ex.Message}", ex);
+                            }
+                        });
                     }
                 }
                 else

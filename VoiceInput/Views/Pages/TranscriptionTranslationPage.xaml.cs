@@ -11,6 +11,7 @@ namespace VoiceInput.Views.Pages
         private readonly ConfigManager _configManager;
         private readonly ILoggerService _logger;
         private readonly SecureStorageService _secureStorage;
+        private readonly ITextToSpeechService _ttsService;
 
         public TranscriptionTranslationPage()
         {
@@ -22,6 +23,7 @@ namespace VoiceInput.Views.Pages
             _configManager = serviceProvider?.GetService<ConfigManager>();
             _logger = serviceProvider?.GetService<ILoggerService>();
             _secureStorage = serviceProvider?.GetService<SecureStorageService>();
+            _ttsService = serviceProvider?.GetService<ITextToSpeechService>();
             
             if (_configManager != null)
             {
@@ -59,6 +61,9 @@ namespace VoiceInput.Views.Pages
                 {
                     GPTApiKeyBox.Password = new string('●', 8);
                 }
+                
+                // 加载 TTS 设置
+                LoadTtsSettings();
             }
             catch (Exception ex)
             {
@@ -92,6 +97,9 @@ namespace VoiceInput.Views.Pages
                 _configManager.SaveSetting("VoiceInput:GPTAPI:Timeout", GPTTimeoutBox.Value.ToString());
                 _configManager.SaveSetting("VoiceInput:GPTAPI:Temperature", GPTTemperatureSlider.Value.ToString());
                 _configManager.SaveSetting("VoiceInput:GPTAPI:MaxTokens", MaxTokensBox.Value.ToString());
+                
+                // 保存 TTS 设置
+                SaveTtsSettings();
                 
                 _logger?.Info("转写翻译设置已保存");
             }
@@ -194,6 +202,128 @@ namespace VoiceInput.Views.Pages
             catch (Exception ex)
             {
                 _logger?.Error($"保存 GPT API 密钥失败: {ex.Message}", ex);
+                MessageBox.Show($"保存密钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        // TTS 设置相关方法
+        private void LoadTtsSettings()
+        {
+            if (_configManager?.TtsSettings == null) return;
+            
+            var ttsSettings = _configManager.TtsSettings;
+            
+            // 加载 CheckBox 状态
+            UseOpenAIConfigCheckBox.IsChecked = ttsSettings.UseOpenAIConfig;
+            
+            // 加载自定义 API 设置
+            if (!ttsSettings.UseOpenAIConfig && !string.IsNullOrEmpty(ttsSettings.CustomApiKey))
+            {
+                TtsApiKeyBox.Password = new string('●', 8);
+            }
+            TtsApiUrlBox.Text = ttsSettings.CustomApiUrl;
+            
+            // 加载模型和参数
+            TtsModelComboBox.SelectedValue = ttsSettings.Model;
+            TtsSpeedSlider.Value = ttsSettings.Speed;
+            TtsVolumeSlider.Value = ttsSettings.Volume;
+            
+            // 加载语音映射
+            if (ttsSettings.VoiceMapping != null)
+            {
+                if (ttsSettings.VoiceMapping.ContainsKey("zh"))
+                    ChineseVoiceComboBox.SelectedValue = ttsSettings.VoiceMapping["zh"];
+                if (ttsSettings.VoiceMapping.ContainsKey("en"))
+                    EnglishVoiceComboBox.SelectedValue = ttsSettings.VoiceMapping["en"];
+                if (ttsSettings.VoiceMapping.ContainsKey("ja"))
+                    JapaneseVoiceComboBox.SelectedValue = ttsSettings.VoiceMapping["ja"];
+                if (ttsSettings.VoiceMapping.ContainsKey("default"))
+                    DefaultVoiceComboBox.SelectedValue = ttsSettings.VoiceMapping["default"];
+            }
+        }
+        
+        private void SaveTtsSettings()
+        {
+            if (_configManager?.TtsSettings == null) return;
+            
+            var ttsSettings = _configManager.TtsSettings;
+            
+            // 保存 UseOpenAIConfig
+            ttsSettings.UseOpenAIConfig = UseOpenAIConfigCheckBox.IsChecked ?? true;
+            
+            // 如果使用自定义配置，保存密钥
+            if (!ttsSettings.UseOpenAIConfig && !string.IsNullOrWhiteSpace(TtsApiKeyBox.Password) && !TtsApiKeyBox.Password.StartsWith("●"))
+            {
+                ttsSettings.CustomApiKey = TtsApiKeyBox.Password;
+            }
+            
+            // 保存自定义 API URL
+            ttsSettings.CustomApiUrl = TtsApiUrlBox.Text;
+            
+            // 保存模型和参数
+            ttsSettings.Model = TtsModelComboBox.SelectedValue?.ToString() ?? "tts-1";
+            ttsSettings.Speed = TtsSpeedSlider.Value;
+            ttsSettings.Volume = (int)TtsVolumeSlider.Value;
+            
+            // 保存语音映射
+            ttsSettings.VoiceMapping["zh"] = ChineseVoiceComboBox.SelectedValue?.ToString() ?? "nova";
+            ttsSettings.VoiceMapping["en"] = EnglishVoiceComboBox.SelectedValue?.ToString() ?? "echo";
+            ttsSettings.VoiceMapping["ja"] = JapaneseVoiceComboBox.SelectedValue?.ToString() ?? "alloy";
+            ttsSettings.VoiceMapping["default"] = DefaultVoiceComboBox.SelectedValue?.ToString() ?? "nova";
+            
+            // 保存到配置文件
+            _configManager.SaveTtsSettings(ttsSettings);
+        }
+        
+        // TTS API 密钥事件处理
+        private void ShowTtsApiKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var ttsSettings = _configManager?.TtsSettings;
+                if (ttsSettings != null && !string.IsNullOrEmpty(ttsSettings.CustomApiKey))
+                {
+                    TtsApiKeyBox.Password = ttsSettings.CustomApiKey;
+                    _logger?.Info("显示 TTS API 密钥");
+                }
+                else
+                {
+                    MessageBox.Show("未设置 TTS API 密钥", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error($"显示 TTS API 密钥失败: {ex.Message}", ex);
+                MessageBox.Show($"显示密钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void SaveTtsApiKey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var apiKey = TtsApiKeyBox.Password;
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    MessageBox.Show("请输入 API 密钥", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                
+                if (_configManager?.TtsSettings != null)
+                {
+                    _configManager.TtsSettings.CustomApiKey = apiKey;
+                    _configManager.SaveTtsSettings(_configManager.TtsSettings);
+                }
+                
+                // 显示为星号而不是清空
+                TtsApiKeyBox.Password = new string('●', 8);
+                
+                MessageBox.Show("TTS API 密钥已保存", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                _logger?.Info("TTS API 密钥已保存");
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error($"保存 TTS API 密钥失败: {ex.Message}", ex);
                 MessageBox.Show($"保存密钥失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

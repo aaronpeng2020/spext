@@ -75,7 +75,9 @@ namespace VoiceInput.Views.Dialogs
                 Hotkey = "F4",
                 InputLanguage = "zh-CN",
                 OutputLanguage = "zh-CN",
-                IsEnabled = true
+                IsEnabled = true,
+                EnableReadAloud = false,
+                ReadAloudVoice = "auto"
             };
 
             InitializeComponent();

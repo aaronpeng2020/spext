@@ -228,6 +228,46 @@
                 </StackPanel>
             </GroupBox>
 
+            <!-- 朗读设置 -->
+            <GroupBox Header="朗读设置" Margin="0,0,0,15">
+                <StackPanel Margin="5">
+                    <CheckBox Name="EnableReadAloudCheckBox"
+                              Content="启用朗读（翻译后自动朗读文本）"
+                              IsChecked="{Binding Profile.EnableReadAloud}"
+                              IsEnabled="{Binding Profile.CanEnableReadAloud}"
+                              Margin="0,0,0,10"/>
+                    
+                    <TextBlock Text="朗读语音" 
+                               Margin="0,0,0,5"
+                               IsEnabled="{Binding Profile.EnableReadAloud}"/>
+                    <ComboBox Name="ReadAloudVoiceComboBox"
+                              SelectedValuePath="Tag"
+                              SelectedValue="{Binding Profile.ReadAloudVoice}"
+                              IsEnabled="{Binding Profile.EnableReadAloud}">
+                        <ComboBoxItem Content="自动选择" Tag="auto"/>
+                        <ComboBoxItem Content="Alloy (中性)" Tag="alloy"/>
+                        <ComboBoxItem Content="Echo (男声)" Tag="echo"/>
+                        <ComboBoxItem Content="Fable (英式)" Tag="fable"/>
+                        <ComboBoxItem Content="Onyx (低沉)" Tag="onyx"/>
+                        <ComboBoxItem Content="Nova (女声)" Tag="nova"/>
+                        <ComboBoxItem Content="Shimmer (柔和)" Tag="shimmer"/>
+                    </ComboBox>
+                    
+                    <TextBlock FontSize="11"
+                               Foreground="Gray"
+                               Margin="0,5,0,0"
+                               TextWrapping="Wrap">
+                        <Run Text="提示："/>
+                        <LineBreak/>
+                        <Run Text="• 朗读功能仅在启用翻译时可用"/>
+                        <LineBreak/>
+                        <Run Text="• '自动选择'会根据输出语言选择合适的语音"/>
+                        <LineBreak/>
+                        <Run Text="• 按下任意录音快捷键可中断当前朗读"/>
+                    </TextBlock>
+                </StackPanel>
+            </GroupBox>
+
             <!-- 启用状态 -->
             <CheckBox Name="IsEnabledCheckBox"
                       Content="启用此配置"

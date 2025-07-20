@@ -92,6 +92,9 @@ namespace VoiceInput
             services.AddSingleton<IEnhancedSpeechRecognitionService, EnhancedSpeechRecognitionService>();
             services.AddSingleton<IEnhancedGlobalHotkeyService, EnhancedGlobalHotkeyService>();
             
+            // 注册 TTS 服务
+            services.AddSingleton<ITextToSpeechService, TextToSpeechService>();
+            
             // 注册控制器（使用增强版）
             services.AddSingleton<EnhancedVoiceInputController>();
             

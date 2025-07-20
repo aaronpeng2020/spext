@@ -10,6 +10,7 @@ namespace VoiceInput.Services
         private const string PROXY_CREDENTIAL_TARGET = "VoiceInput_Proxy";
         private const string WHISPER_CREDENTIAL_TARGET = "VoiceInput_WhisperAPIKey";
         private const string GPT_CREDENTIAL_TARGET = "VoiceInput_GPTAPIKey";
+        private const string TTS_CREDENTIAL_TARGET = "VoiceInput_TTSAPIKey";
 
         public void SaveApiKey(string apiKey)
         {
@@ -301,6 +302,85 @@ namespace VoiceInput.Services
             try
             {
                 using (var credential = new Credential { Target = GPT_CREDENTIAL_TARGET })
+                {
+                    return credential.Exists();
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        // TTS API 密钥管理
+        public void SaveTtsApiKey(string apiKey)
+        {
+            try
+            {
+                using (var credential = new Credential())
+                {
+                    credential.Target = TTS_CREDENTIAL_TARGET;
+                    credential.Username = "VoiceInput_TTS";
+                    credential.Password = apiKey;
+                    credential.Type = CredentialType.Generic;
+                    credential.PersistanceType = PersistanceType.LocalComputer;
+                    credential.Save();
+                }
+                
+                LoggerService.Log("TTS API密钥已安全保存到Windows凭据管理器");
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"保存TTS API密钥失败: {ex.Message}");
+                throw new Exception("无法保存TTS API密钥到凭据管理器", ex);
+            }
+        }
+
+        public string? LoadTtsApiKey()
+        {
+            try
+            {
+                using (var credential = new Credential())
+                {
+                    credential.Target = TTS_CREDENTIAL_TARGET;
+                    credential.Load();
+                    
+                    if (!string.IsNullOrEmpty(credential.Password))
+                    {
+                        LoggerService.Log("从Windows凭据管理器加载TTS API密钥成功");
+                        return credential.Password;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"加载TTS API密钥失败: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        public void DeleteTtsApiKey()
+        {
+            try
+            {
+                using (var credential = new Credential { Target = TTS_CREDENTIAL_TARGET })
+                {
+                    credential.Delete();
+                    LoggerService.Log("TTS API密钥已从Windows凭据管理器删除");
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"删除TTS API密钥失败: {ex.Message}");
+            }
+        }
+
+        public bool HasTtsApiKey()
+        {
+            try
+            {
+                using (var credential = new Credential { Target = TTS_CREDENTIAL_TARGET })
                 {
                     return credential.Exists();
                 }

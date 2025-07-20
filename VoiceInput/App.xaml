@@ -3,9 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:VoiceInput"
              xmlns:ui="http://schemas.modernwpf.com/2019"
+             xmlns:converters="clr-namespace:VoiceInput.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- Converters -->
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            
             <ResourceDictionary.MergedDictionaries>
                 <!-- ModernWPF Resources -->
                 <ui:ThemeResources />

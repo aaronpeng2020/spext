@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using VoiceInput.Models;
 
 namespace VoiceInput.Services
 {
@@ -14,6 +15,7 @@ namespace VoiceInput.Services
         private readonly SecureStorageService _secureStorage;
         private readonly AutoStartService _autoStartService;
         private string? _cachedApiKey;
+        private TtsSettings _ttsSettings;
         
         public ConfigManager(IConfiguration configuration, SecureStorageService secureStorage, AutoStartService autoStartService)
         {
@@ -22,6 +24,7 @@ namespace VoiceInput.Services
             _autoStartService = autoStartService;
             LoadApiKey();
             LoadProxyCredentials();
+            LoadTtsSettings();
             
             // 同步自动启动设置
             if (AutoStart != _autoStartService.IsAutoStartEnabled())
@@ -38,9 +41,10 @@ namespace VoiceInput.Services
                 configRoot.Reload();
                 LoggerService.Log("配置已重新加载");
                 
-                // 重新加载缓存的凭据，避免凭据丢失
+                // 重新加载缓存的凭据和设置，避免数据丢失
                 LoadApiKey();
                 LoadProxyCredentials();
+                LoadTtsSettings();
             }
         }
 
@@ -386,6 +390,109 @@ namespace VoiceInput.Services
             catch (Exception ex)
             {
                 LoggerService.Log($"保存Whisper设置失败: {ex.Message}");
+                throw;
+            }
+        }
+        
+        // TTS 设置相关
+        public TtsSettings TtsSettings => _ttsSettings;
+        
+        // 为了兼容性，提供 WhisperApiKey 和 WhisperApiUrl 属性
+        public string WhisperApiKey => ApiKey;
+        public string WhisperApiUrl => WhisperBaseUrl;
+        
+        private void LoadTtsSettings()
+        {
+            _ttsSettings = new TtsSettings();
+            
+            // 从配置文件加载 TTS 设置
+            var ttsSection = _configuration.GetSection("VoiceInput:TtsAPI");
+            if (ttsSection.Exists())
+            {
+                _ttsSettings.UseOpenAIConfig = bool.TryParse(ttsSection["UseOpenAIConfig"], out var useOpenAI) ? useOpenAI : true;
+                _ttsSettings.Model = ttsSection["Model"] ?? "tts-1";
+                _ttsSettings.Speed = double.TryParse(ttsSection["Speed"], out var speed) ? speed : 1.0;
+                _ttsSettings.Volume = int.TryParse(ttsSection["Volume"], out var volume) ? volume : 80;
+                
+                // 加载语音映射
+                var voiceMappingSection = ttsSection.GetSection("VoiceMapping");
+                if (voiceMappingSection.Exists())
+                {
+                    var voiceMapping = new Dictionary<string, string>();
+                    foreach (var child in voiceMappingSection.GetChildren())
+                    {
+                        voiceMapping[child.Key] = child.Value;
+                    }
+                    if (voiceMapping.Count > 0)
+                    {
+                        _ttsSettings.VoiceMapping = voiceMapping;
+                    }
+                }
+                
+                // 如果不使用 OpenAI 配置，加载自定义配置
+                if (!_ttsSettings.UseOpenAIConfig)
+                {
+                    _ttsSettings.CustomApiKey = _secureStorage.LoadTtsApiKey();
+                    _ttsSettings.CustomApiUrl = ttsSection["CustomApiUrl"];
+                }
+            }
+        }
+        
+        public void SaveTtsSettings(TtsSettings settings)
+        {
+            try
+            {
+                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+                string jsonString = File.ReadAllText(configPath);
+                var jsonObject = JObject.Parse(jsonString);
+                
+                // 确保路径存在
+                if (jsonObject["VoiceInput"] == null)
+                    jsonObject["VoiceInput"] = new JObject();
+                if (jsonObject["VoiceInput"]["TtsAPI"] == null)
+                    jsonObject["VoiceInput"]["TtsAPI"] = new JObject();
+                
+                var ttsNode = jsonObject["VoiceInput"]["TtsAPI"];
+                
+                // 保存基本设置
+                ttsNode["UseOpenAIConfig"] = settings.UseOpenAIConfig;
+                ttsNode["Model"] = settings.Model;
+                ttsNode["Speed"] = settings.Speed;
+                ttsNode["Volume"] = settings.Volume;
+                
+                // 保存语音映射
+                if (settings.VoiceMapping != null && settings.VoiceMapping.Count > 0)
+                {
+                    ttsNode["VoiceMapping"] = JObject.FromObject(settings.VoiceMapping);
+                }
+                
+                // 如果不使用 OpenAI 配置，保存自定义 URL
+                if (!settings.UseOpenAIConfig)
+                {
+                    ttsNode["CustomApiUrl"] = settings.CustomApiUrl;
+                    
+                    // 保存自定义 API 密钥到安全存储
+                    if (!string.IsNullOrEmpty(settings.CustomApiKey))
+                    {
+                        _secureStorage.SaveTtsApiKey(settings.CustomApiKey);
+                    }
+                }
+                
+                // 保存到文件
+                string updatedJson = jsonObject.ToString(Formatting.Indented);
+                File.WriteAllText(configPath, updatedJson);
+                
+                // 更新内存中的设置
+                _ttsSettings = settings;
+                
+                LoggerService.Log("TTS 设置已保存");
+                
+                // 重新加载配置
+                ReloadConfiguration();
+            }
+            catch (Exception ex)
+            {
+                LoggerService.Log($"保存 TTS 设置失败: {ex.Message}");
                 throw;
             }
         }

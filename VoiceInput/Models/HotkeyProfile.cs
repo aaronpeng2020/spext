@@ -19,6 +19,8 @@ namespace VoiceInput.Models
         private bool _isEnabled;
         private DateTime _createdAt;
         private DateTime _updatedAt;
+        private bool _enableReadAloud;
+        private string _readAloudVoice;
 
         public string Id
         {
@@ -68,6 +70,7 @@ namespace VoiceInput.Models
                 _outputLanguage = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsTranslationEnabled));
+                OnPropertyChanged(nameof(CanEnableReadAloud));
             }
         }
 
@@ -157,6 +160,29 @@ namespace VoiceInput.Models
             }
         }
 
+        public bool EnableReadAloud
+        {
+            get => _enableReadAloud;
+            set
+            {
+                _enableReadAloud = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ReadAloudVoice
+        {
+            get => _readAloudVoice;
+            set
+            {
+                _readAloudVoice = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // 计算属性：是否可以启用朗读
+        public bool CanEnableReadAloud => IsTranslationEnabled;
+
         public HotkeyProfile()
         {
             Id = Guid.NewGuid().ToString();
@@ -164,6 +190,8 @@ namespace VoiceInput.Models
             UpdatedAt = DateTime.Now;
             IsEnabled = true;
             RecordingMode = "PushToTalk"; // 默认使用按住说话模式
+            EnableReadAloud = false;
+            ReadAloudVoice = "auto";
         }
 
         public HotkeyProfile Clone()
@@ -182,7 +210,9 @@ namespace VoiceInput.Models
                 IsDefault = IsDefault,  // 保留原始默认状态
                 IsEnabled = IsEnabled,
                 CreatedAt = CreatedAt,  // 保留原始创建时间
-                UpdatedAt = DateTime.Now
+                UpdatedAt = DateTime.Now,
+                EnableReadAloud = EnableReadAloud,
+                ReadAloudVoice = ReadAloudVoice
             };
         }
 
